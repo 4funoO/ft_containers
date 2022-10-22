@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:14 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/20 18:12:43 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/22 19:07:56 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,52 +22,48 @@ namespace ft {
 		public:
 			typedef	T											value_type;
 			typedef	Allocator									allocator_type;
-			typedef	typename std::size_t						size_type;
-			typedef typename std::ptrdiff_t						difference_type;
+			typedef	typename allocator_type::size_type			size_type;
+			typedef typename allocator_type::difference_type	difference_type;
 			typedef	typename allocator_type::reference			reference;
 			typedef	typename allocator_type::const_reference	const_reference;
 			typedef	typename allocator_type::pointer			pointer;
 			typedef	typename allocator_type::const_pointer		const_pointer;
-			////////////////////////////////////	
+			////////////////////////////////////
 			typedef	Allocator::const_pointer					iterator;
 			typedef	Allocator::const_pointer					const_iterator;
 			typedef	ft::reverse_iterator<iterator>				reverse_iterator;
 			typedef	ft::reverse_iterator<const_iterator>		const_reverse_iterator;
 
-		private:
+		protected:
 			size_type		_size;
 			size_type		_cap;
 			pointer			_begin;
-			pointer			_end;
 			allocator_type	_alloc;
 
 		public:
 		// ******CONSTRUCTORS******
 			// 1) Default
 			explicit vector ( const allocator_type& alloc = allocator_type() )
-							: _size(0), _cap(0), _begin(NULL), _end(NULL), _alloc(alloc) { }
+							: _size(0), _cap(0), _begin(nullptr), _alloc(alloc) { }
 			// 2) Fill
 			explicit vector ( size_type n, const value_type& val = value_type(),
 							const allocator_type& alloc = allocator_type() )
-								: _size(0), _cap(n), _begin(NULL), _end(NULL), _alloc(alloc) {
-				_begin = _alloc.allocate(_cap);
-				_end = _begin;
-				for ( _size = 0; i < _size; _size++, _end++ ) {
+								: _size(0), _cap(n), _begin(nullptr), _alloc(alloc) {
+				_begin = _alloc.allocate(_cap);	
+				for ( ; _size <= _cap; _size++ ) {
 					try {
-						_alloc.construct(_end, val);
+						_alloc.construct(&(_begin[_size]), val);
 					}
 					catch(...) {
 						clear();
 						_alloc.deallocate(_begin, _cap);
-						_cap = 0; _begin = NULL;
-						throw;
 					}
-				}				
+				}
 			}
 			//?????????????????????????? 3) Range
 			template <class InputIterator>
 			vector ( InputIterator first, InputIterator last, const allocator_type& alloc = allocator_type() )
-					: _size(0), _cap(0), _begin(first), _end(NULL), _alloc(alloc) {
+					: _size(0), _cap(0), _begin(first), _alloc(alloc) {
 				for ( ; first != last; _cap++, first++);
 				if (_cap > 0) {
 					first = _begin;
@@ -80,13 +76,13 @@ namespace ft {
 						catch(...) {
 							clear();
 							_alloc.deallocate(_begin, _cap);
-							_cap = 0; _begin = NULL;
+							_cap = 0; _begin = nullptr;
 						}
 					}
 				}
 			}
-		// 4) copy
-			vector ( const vector& x ) {	*this = x; }
+			// 4) copy
+			vector ( const vector& x ) { *this = x; }
 		// DESTRUCTOR
 			~vector() {
 				clear();
@@ -97,40 +93,43 @@ namespace ft {
 			vector& operator=( const vector& x ) {
 				if (*this == x)
 					return (*this);
+				size_type	xsize = x.size();
+				size_type	xcap = x.capacity();
+				pointer		tmp = nullptr;
+
+				if (xcap > 0) {
+					tmp =_alloc.allocate(xcap);
+					for (size_type i = 0; i < xsize; i++) {
+						try {
+							_alloc.construct(&tmp[i], x[i]);
+						}
+						catch(...) {
+							for (size_type j = 0; j < i; j++)
+								_alloc.destroy(&tmp[j]);
+							_alloc.deallocate(tmp, xcap);
+						}
+					}
+				}
 				clear();
-				if (_cap != x.capacity()) {
+				if (_cap > 0)
 					_alloc.deallocate(_begin, _cap);
-					_cap = x.capacity();
-					begin = _alloc.allocate(_cap);
-				}
-				_end = _begin;
-				for (_size = 0; _size < x.size(); _size++, _end++) {
-					try {
-						_alloc.construct(_end, x[_size]);
-					}
-					catch(...) {
-						clear();
-						_alloc.deallocate(_begin, _cap);
-						_cap = 0; _begin = NULL;
-						throw;
-					}
-				}
+				_cap = xcap; _size = xsize; _begin = tmp;
 				return (*this);
 			}
 
 		// ITERATORS
 			// 1) Begin
-			iterator begin() { return this->_begin; }
-			const_iterator begin() const { return this->_begin; }
+			iterator begin() { return iterator(_begin); }
+			const_iterator begin() const { return const_iterator(_begin); }
 			// 2) End
-			iterator end() { return this->_end; }
-			const_iterator end() const { return this->_end; }
+			iterator end() { return iterator(_begin + _size); }
+			const_iterator end() const { return const_iterator(_begin + _size); }
 			// 3) Reverse Begin
-			reverse_iterator rbegin() { return this->end; }
-			const_reverse_iterator rbegin() const { return this->end; }
+			reverse_iterator rbegin() { return reverse_iterator(_begin); }
+			const_reverse_iterator rbegin() const { return reverse_iterator(_begin + _size); }
 			// 4) Reverse End
-			reverse_iterator rend() { return (this->begin - 1); }
-			const_reverse_iterator rend() const { return (this->begin - 1); }
+			reverse_iterator rend() { return reverse_iterator(_begin); }
+			const_reverse_iterator rend() const { return const_reverse_iterator(_begin); }
 
 		// CAPACITY FUNCTIONS
 			// 1) Size of the vector
@@ -143,7 +142,7 @@ namespace ft {
 			}
 			// 3) Max possible size of the vector
 			size_type	max_size() const {
-				return ( ((2 << (64 - size(type))) - 1 ));
+				return ( ((2 << (64 - size(value_type))) - 1 ));
 			}
 			// 4) Checks if the current vector is empty
 			bool	empty() const {
@@ -155,45 +154,50 @@ namespace ft {
 			void	reserve( size_type new_cap ) {
 				if (new_cap > _cap) {
 					pointer	tmp = _alloc.allocate(new_cap);
-					pointer	end = tmp;
-					size_type i = 0
-					for ( ; i < _size; i++, end++)
-					{
+					for ( size_type i = 0; i < _size; i++) {
 						try {
-							_alloc.construct(end, this[i]);
+							_alloc.construct(&tmp[i], _begin[i]);
 						}
 						catch(...) {
-							for ( ; i > 0; i--, end--)
-								_alloc.destroy(end);
+							for (size_type j = 0; j < i; j++)													
+								_alloc.destroy(&tmp[i]);
 							_alloc.deallocate(tmp, new_cap);
-							throw;
 						}
 					}
 					clear();
 					_alloc.deallocate(_begin, _cap);
-					_begin = tmp; _cap = new_cap; _end = end; _size = i;
+					_begin = tmp; _cap = new_cap;
 				}
 			}
 			// 6)  Making capacity of the vector equal to it's size
 			void	shrink_to_fit() {
 				if (_size < _cap) {
-					ft::vector	tmp(_begin, _end);
-
+					pointer	tmp = _alloc.allocate(_size);
+					for ( size_type i = 0; i < _size; i++) {
+						try {
+							_alloc.construct(&tmp[i], _begin[i]);
+						}
+						catch(...) {
+							for (size_type j = 0; j < i; j++)	
+								_alloc.destroy(&tmp[i]);
+							_alloc.deallocate(tmp, _size);
+						}
+					}
 					clear();
 					_alloc.deallocate(_begin, _cap);
-					*this = tmp;
+					_begin = tmp; _cap = _size;
 				}
 			}
 		// MODIFIERS
 			// 1) Clearing array, calling destructor to all members;
 			void	clear() {
-				for ( ; _size > 0; _size--, _end-- )
-					_alloc.destroy(_end);
+				for (size_type i = 0; i < _size; i++)
+					_alloc.destroy(&begin[i]);
 			}
 			// 2) Swap values of the vector with given one;
 			void	swap( vector& x ) {
 				vector	tmp(x);
-				
+
 				x = *this;
 				*this = tmp;
 			}

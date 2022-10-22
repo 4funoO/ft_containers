@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/19 11:22:35 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/19 11:50:51 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/22 14:57:21 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,6 @@ namespace ft{
 			if (*first2 < *first1)
 				return false;
 		}
-
 		return (first1 == last1) && (first2 != last2);
 	}
 	
@@ -64,7 +63,6 @@ namespace ft{
 			if (comp(*first2, *first1))
 				return false;
 		}
-
 		return (first1 == last1) && (first2 != last2);
 	}
 }
