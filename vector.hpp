@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:14 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/25 18:11:41 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/27 11:39:03 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 # include <iostream>
 # include <stdexcept>
-# include "./iterators/iterator.hpp"
+# include "./iterators/VectorIterator.hpp"
 # include "algorithm.hpp"
 
 namespace ft {
