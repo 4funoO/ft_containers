@@ -6,20 +6,20 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:14 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/27 11:39:03 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/29 16:18:37 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef VECTOR_HPP
 # define VECTOR_HPP
 
-# include <iostream>
 # include <stdexcept>
-# include "./iterators/VectorIterator.hpp"
+# include "iterators/VectorIterator.hpp"
 # include "algorithm.hpp"
+# include "type_traits.hpp"
 
 namespace ft {
-	template<class T, class Allocator = std::allocator<T>>
+	template<class T, class Allocator = std::allocator<T> >
 	class vector {
 	public:
 		typedef	T											value_type;
@@ -30,8 +30,8 @@ namespace ft {
 		typedef	typename allocator_type::const_reference	const_reference;
 		typedef	typename allocator_type::pointer			pointer;
 		typedef	typename allocator_type::const_pointer		const_pointer;
-		typedef	ft::VectorIterator<T>						iterator;
-		typedef	ft::VectorIterator<const T>					const_iterator;
+		typedef	ft::VectorIterator<value_type>				iterator;
+		typedef	ft::VectorIterator<const value_type>		const_iterator;
 		typedef	ft::reverse_iterator<iterator>				reverse_iterator;
 		typedef	ft::reverse_iterator<const_iterator>		const_reverse_iterator;
 
@@ -59,20 +59,8 @@ namespace ft {
 			assign(first, last);
 		}
 		// 4) Copy
-		vector ( const vector& x ) { *this = x; }
-
-	// DESTRUCTOR
-		~vector() { _vdeallocate() }
-
-	// ASSIGN CONTENT
-		vector& operator=( const vector& x ) {
-			if (*this == x)
-				return (*this);
-			clear();
-			if (_cap != x.capacity()) {
-				_alloc.deallocate(_begin, _cap);
-				_vallocate(x.capacity());
-			}
+		vector ( const vector& x ) : _size(0), _cap(0), _begin(nullptr), _alloc(x.get_allocator()) { 
+			_vallocate(x.capacity());
 			for ( ; _size < x._size; _size++) {
 				try {
 					_alloc.construct(_begin + _size, x[_size]);
@@ -81,37 +69,31 @@ namespace ft {
 					_vdeallocate();
 				}
 			}
+		}
+
+	// DESTRUCTOR
+		~vector() { _vdeallocate(); }
+
+	// ASSIGN CONTENT
+		vector& operator=( const vector& x ) {
+			if (*this == x)
+				return (*this);
+			assign(x.begin(), x.end());
 			return *this;
 		}
 
 	// ASSIGN - Assigns new contents to the vector, replacing its current contents
-		// 1) Range
-		template <class InputIterator>
-		void	assign(InputIterator first, InputIterator last) {
-			size_type	count = std::distance(first, last);
-
-			clear();
-			if (dist > _cap) {
-				_alloc.deallocate(_begin, _cap);
-				_vallocate(count);
-			}
-			for ( ; first != last; first++, _size++) {
-				try {
-					_alloc.construct(_begin + _size, *first);
-				}
-				catch(...) {
-					_vdeallocate();
-				}
-			}
-		}
-		// 2) Fill
+		// 1) Fill
 		void	assign(size_type count, const value_type& val) {
+			if (count == 0)
+				return;
 			clear();
 			if (count > _cap) {
-				_alloc.deallocate(_begin, _cap);
+				if (_cap > 0)
+					_alloc.deallocate(_begin, _cap);
 				_vallocate(count);
 			}
-			for ( ; _size < count, _size++) {
+			for ( ; _size < count; _size++) {
 				try {
 					_alloc.construct(_begin + _size, val);
 				}
@@ -119,6 +101,12 @@ namespace ft {
 					_vdeallocate();
 				}
 			}
+		}
+		// 2) Range
+		template <class InputIterator>
+		void	assign(InputIterator first, InputIterator last,
+				typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type * = NULL) {
+			_assignrange(first, last, typename iterator_traits<InputIterator>::iterator_category());
 		}
 
 	// ALLOCATOR
@@ -129,12 +117,12 @@ namespace ft {
 		// 1) "at" - Returns a reference to the element at position n in the vector
 		reference	at(size_type pos) {
 			if (pos >= size())			
-				throw std::std::out_of_range("ft::vector");
+				throw std::out_of_range("ft::vector");
 			return *(_begin + pos);
 		}
 		const_reference	at(size_type pos) const {
 			if (pos >= size())			
-				throw std::std::out_of_range("ft::vector");
+				throw std::out_of_range("ft::vector");
 			return *(_begin + pos);
 		}
 		// 2) "[]" - The same behavior as 'at' operator function, but no bounds checking is performed
@@ -144,25 +132,25 @@ namespace ft {
 		reference 		front()							{ return *_begin; }
 		const_reference front() const					{ return *_begin; }
 		// 4) "back" - Returns a reference to the last element in the vector
-		reference		back() 							{ return *_begin + (_size - 1); }
-		const_reference	back() const					{ return *_begin + (_size - 1); }
+		reference		back() 							{ return *(_begin + _size - 1); }
+		const_reference	back() const					{ return *(_begin + _size - 1); }
 		// 5) "data" - Returns a direct pointer to the memory array used internally by the vector
 		value_type*			data() 						{ return _begin; }
 		const value_type*	data() const				{ return _begin; }
 
 	// ITERATORS
 		// 1) Begin - iterator pointing first element position
-		iterator				begin()			{ return ft::iterator(_begin); }
-		const_iterator 			begin() const	{ return ft::const_iterator(_begin); }
+		iterator				begin()			{ return iterator(_begin); }
+		const_iterator 			begin() const	{ return const_iterator(_begin); }
 		// 2) End - iterator pointing last element position
-		iterator				end()			{ return ft::iterator(_begin + _size); }
-		const_iterator			end() const 	{ return ft::const_iterator(_begin + _size); }
+		iterator				end()			{ return iterator(_begin + _size); }
+		const_iterator			end() const 	{ return const_iterator(_begin + _size); }
 		// 3) Reverse Begin - iterator pointing after the last element position
-		reverse_iterator		rbegin()		{ return ft::reverse_iterator(_begin + _size); }
-		const_reverse_iterator	rbegin() const	{ return ft::reverse_iterator(_begin + _size); }
+		reverse_iterator		rbegin()		{ return reverse_iterator(_begin + _size); }
+		const_reverse_iterator	rbegin() const	{ return reverse_iterator(_begin + _size); }
 		// 4) Reverse End - iterator pointing first element position
-		reverse_iterator		rend()			{ return ft::reverse_iterator(_begin); }
-		const_reverse_iterator	rend() const	{ return ft::const_reverse_iterator(_begin); }
+		reverse_iterator		rend()			{ return reverse_iterator(_begin); }
+		const_reverse_iterator	rend() const	{ return const_reverse_iterator(_begin); }
 
 	// CAPACITY FUNCTIONS
 		// 1) Checks if the current vector is empty
@@ -176,9 +164,11 @@ namespace ft {
 			return _size;
 		}
 		// 3) Max possible size of the vector
-		size_type	max_size() const {
-			return ( std::numeric_limits<difference_type>::max() );
-		}
+		size_type max_size() const {
+        	size_type _amax = _alloc.max_size();
+        	size_type _nmax = std::numeric_limits<size_type>::max() / 2;
+        	return ((_amax < _nmax) ? _amax : _nmax);
+    	}
 		// 4) Creating memory with given capacity
 		void	reserve( size_type new_cap ) {
 			if (new_cap > max_size())
@@ -208,21 +198,21 @@ namespace ft {
 	// MODIFIERS
 		// 1) Clearing array, calling destructor to all members;
 		void	clear() {
-			for (size_type i = 0; i < _size; i++)
-				_alloc.destroy(_begin + i);
-			_size = 0;
+			for (; _size != 0; --_size) {
+				_alloc.destroy(_begin + _size - 1);
+			}
 		}
 		// 2) Inserting value to the given position
 			// a) Single Element
 		iterator	insert( iterator position, const value_type& val ) {
 			pointer		tmp;
 			size_type	cap = _vcapcheck();
-			size_type	dist = static_cast<size_type>(std::distance(begin(), position));
+			size_type	dist = static_cast<size_type>(ft::distance(begin(), position));
 			size_type	i = 0;
 
 			if (position == end()) {
-				push_back();
-				return back();
+				push_back(val);
+				return &back();
 			}
 			tmp = _pallocate(cap);
 			for (size_type k = 0; i < _size; i++) {
@@ -245,132 +235,112 @@ namespace ft {
 		}
 			// b) Fill
 		void	insert (iterator position, size_type n, const value_type& val) {
-			pointer		tmp;
-			size_type	cap = _vcapcheck();
-			size_type	dist = static_cast<size_type>(std::distance(begin(), position));
+			pointer		new_vec;
+			size_type	new_cap = _vcapcheck();
+			size_type	new_size = n + _size;
+			size_type	pos = static_cast<size_type>(ft::distance(begin(), position));
 			size_type	i = 0;
 
-			if (n > (cap - _size))
-				cap = n + _size;
-			tmp = _pallocate(cap);
-			for (size_type k = 0; i < cap; i++) {
+			if (new_size > new_cap)
+				new_cap = new_size;
+			new_vec = _pallocate(new_cap);
+			for (size_type k = 0; i < new_size; i++) {
 				try {
-					if (i == dist) {
+					if (i == pos) {
 						for ( ; k < n; k++)
-							_alloc.construct(tmp + i + k, val);
+							_alloc.construct(new_vec + i + k, val);
 					}
-					_alloc.construct(tmp + i + k, _begin[i]);
+					if (i < _size)
+						_alloc.construct(new_vec + i + k, *(_begin + i));
 				}
 				catch(...) {
 					for (size_type j = 0; j < i + k; j++)
-						_alloc.destroy(tmp + i + k);
-					_alloc.deallocate(tmp, cap);
+						_alloc.destroy(new_vec + i + k);
+					_alloc.deallocate(new_vec, new_cap);
 				}
 			}
 			_vdeallocate();
-			_begin = tmp; _size = i + n; _cap = cap;
+			_begin = new_vec; _size = new_size; _cap = new_cap;
 		}
 			// c) Range
-		template <class InputIterator>
-		void insert (iterator position, InputIterator first, InputIterator last) {
-			pointer		tmp;
-			size_type	cap = _vcapcheck();
-			size_type	dist = static_cast<size_type>(std::distance(begin(), position));
-			size_type	dist2 = static_cast<size_type>(std::distance(first, last));
-			size_type	i = 0;
-
-			if (dist2 > (cap - _size))
-				cap = dist2 + _size;
-			tmp = _pallocate(cap);
-			for (size_type k = 0; i < cap; i++) {
-				try {
-					if (i == dist) {
-						for (; first != last; first++, k++)
-							_alloc.construct(tmp + i + k, *first);
-					}
-					_alloc.construct(tmp + i + k, _begin[i]);
-				}
-				catch(...) {
-					for (size_type j = 0; j < i + k; j++)
-						_alloc.destroy(tmp + i + k);
-					_alloc.deallocate(tmp, cap);
-				}
-			}
-			_vdeallocate();
-			_begin = tmp; _size = i + dist2; _cap = cap;
+		template <class Iterator>
+		void insert (iterator position, Iterator first, Iterator last,
+					typename ft::enable_if<!ft::is_integral<Iterator>::value, Iterator>::type * = NULL) {
+			_insertrange(position, first, last,
+						typename iterator_traits<Iterator>::iterator_category());
 		}
 		// 3) Removing element from given position
 			// a) Single Element
 		iterator	erase(iterator position) {
-			size_type	i = 0;
-			iterator	tmp = position;
+			iterator	last(_begin + _size - 1);
 
-			if (position == back()) {
-				pop_back();
-				return position;
-			}
 			try	{
-				for (; position != back(); position++) {
-					_alloc.destroy(position, *position);
-					_alloc.construct(position, *(position + 1));
+				_vdestroy(&(*position));
+				for (iterator	tmp = position; tmp != last; tmp++) {
+					_alloc.construct(&(*tmp), *(tmp + 1));
+					_alloc.destroy(&(*(tmp + 1)));
 				}
-				_alloc.destroy(position, *position);
 			}
 			catch(...) {
 				_vdeallocate();
 			}
-			_size--;
-			return tmp;
+			return position;
 		}
 			//b) Range 
 		iterator	erase(iterator first, iterator last) {
-			size_type	i = 0;
-			iterator	tmp = first;
+			iterator	end(_begin + _size);
 
-			if (first == last)
-				return first;
-			try	{
-				for (; first != last; first++, _size--)
-					_alloc.destroy(first, *first);
-				for (first = tmp; last != end(); last++, first++) {
-					_alloc.construct(first, *(last));
-					_alloc.destroy(last, *last);
+			if (first != last) {
+				try	{
+					for (iterator tmp = first; tmp != last; tmp++)
+						_vdestroy(&(*tmp));
+					for (iterator tmp = first; last != end; last++, tmp++) {
+						_alloc.construct(&(*tmp), *last);
+						_alloc.destroy(&(*last));
+					}
+				}
+				catch(...) {
+					_vdeallocate();
 				}
 			}
-			catch(...) {
-				_vdeallocate();
-			}
-			return tmp;
+			return first;
 		}
 		// 4) Adds the last element of the container
 		void push_back (const value_type& val) {
 			reserve(_vcapcheck());
-			_alloc.construct(_begin + _size, val);
+			try {
+				_alloc.construct(_begin + _size, val);
+			}
+			catch(...) {
+				_vdeallocate();
+			}
 			_size++;
 		}
 		// 5) Removes the last element of the container
 		void	pop_back() {
-			if (_size != 0)
-				_alloc.destroy(_begin + _size, _begin[_size]);
-			_size--;
+			if (_size != 0) {
+				_vdestroy(_begin + _size - 1);
+			}
 		}
 		// 6) Resizes the container so that it contains n elements
 		void	resize(size_type n, value_type val = value_type()) {
 			if (n < _size) {
-				for ( ; _size < n; _size--)
-					_alloc.destroy(_begin + _size - 1);
+				while (_size != n)
+					_vdestroy(_begin + _size - 1);
 			}
 			else if (n > _size) {
 				reserve(n);
-				for ( ; _size < n; _size++)
+				for ( ; _size != n; _size++)
 					_alloc.construct(_begin + _size, val);
 			}
 		}
 		// 7) Swap values of the vector with given one;
 		void	swap( vector& x ) {
-			ft::swap(_begin, x._begin);
-			ft::swap(_cap, x._cap);
-			ft::swap(_size, x._size);
+			if (*this != x) {
+				ft::swap(_begin, x._begin);
+				ft::swap(_cap, x._cap);
+				ft::swap(_size, x._size);
+			}
 		}
 
 	// UTILS
@@ -391,6 +361,7 @@ namespace ft {
 				_cap = 0;
 			}
 		}
+		// 3) Checks capacity to allocate
 		size_type	_vcapcheck() {
 			size_type	cap = _cap;
 
@@ -398,13 +369,84 @@ namespace ft {
 				cap = 1;
 			else if (_cap == _size)
 				cap = _cap * 2;
-			return (cap)
+			return (cap);
 		}
-
+		// 4) Allocates n memory and returns pointer to it
 		pointer	_pallocate(size_type n) {
 			if (n > max_size())
 				throw std::length_error("ft::vector");
 			return _alloc.allocate(n);
+		}
+		// 5) Destroys an element from this vector
+		void	_vdestroy(pointer element) {
+			_alloc.destroy(element);
+			_size--;
+		}
+		// 6) Assigning 
+			// for random_access_iterator
+		template <class InputIterator>
+		void	_assignrange(InputIterator first, InputIterator last, random_access_iterator_tag) {
+			size_type	count = ft::distance(first, last);
+
+			clear();
+			if (count > _cap) {
+				if (_cap > 0)
+					_alloc.deallocate(_begin, _cap);
+				_vallocate(count);
+			}
+			for ( ; first != last; first++, _size++) {
+				try {
+					_alloc.construct(_begin + _size, *first);
+				}
+				catch(...) {
+					_vdeallocate();
+				}
+			}
+		}
+			// for Input Iterator tag
+		template <class InputIterator>
+		void	_assignrange(InputIterator first, InputIterator last, input_iterator_tag) {
+			clear();
+			for ( ; first != last; first++)
+				push_back(*first);
+		}
+		// 7) Insert Range
+			// for random_access_iterator 
+		template <class Iterator>
+		void _insertrange (iterator position, Iterator first, Iterator last, random_access_iterator_tag) {
+			pointer		new_vec;
+			size_type	new_cap = _vcapcheck();
+			size_type	pos = static_cast<size_type>(ft::distance(begin(), position));
+			size_type	dist = static_cast<size_type>(ft::distance(first, last));
+			size_type	new_size = dist + _size;
+			size_type	i = 0;
+
+			if (new_size > new_cap)
+				new_cap = new_size;
+			new_vec = _pallocate(new_cap);
+			try {
+				for (size_type j = 0; i < new_size; i++, j++) {
+					if (i == pos) {
+						for (; first != last; first++, i++)
+							_alloc.construct(new_vec + i, *first);
+					}
+					if (j < _size)
+						_alloc.construct(new_vec + i, *(_begin + j));
+				}
+			}
+			catch (...) {
+				for (; i != 0; i--)
+					_alloc.destroy(new_vec + i - 1);
+				_alloc.deallocate(new_vec, new_cap);
+			}
+			_vdeallocate();
+			_begin = new_vec; _size = new_size; _cap = new_cap;
+		}
+			// for input_iterator_tag 
+		template <class Iterator>
+		void _insertrange (iterator position, Iterator first, Iterator last, input_iterator_tag) {
+			for (; first != last; ++first, position++)
+				position = insert(position, *first);
 		}
 	}; // vector
 

@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/25 13:51:15 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/27 13:02:31 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/29 16:02:03 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 # define VECTORITERATOR_HPP
 
 # include "iterator.hpp"
-# include "../vector.hpp"
 
 namespace ft{
 	//VECTOR ITERATORS
@@ -26,15 +25,15 @@ namespace ft{
     	typedef typename iterator_traits<iterator_type>::difference_type	difference_type;
     	typedef typename iterator_traits<iterator_type>::pointer			pointer;
     	typedef typename iterator_traits<iterator_type>::reference			reference;
+		typedef typename iterator_traits<iterator_type>::iterator_category	iterator_category;
 
-	public:
 	// CONSTRUCTORS
 		// 1) Default
-		VectorIterator() : _ptr(nullptr) { }
+		VectorIterator() : _ptr() { }
 		// 2) Initialization
-		VectorIterator(pointer ptr) : _ptr(ptr) { }
+		VectorIterator(const iterator_type& ptr) : _ptr(ptr) { }
 		// 3) Copy
-		VectorIterator ( const VectorIterator& x ) { _ptr = x._ptr; }
+		VectorIterator ( const VectorIterator& x ) { _ptr = x.base(); }
 	// ASSIGN OPERATOR
 		VectorIterator& operator=( const VectorIterator& x ) {
 			if (*this != x)
@@ -100,7 +99,10 @@ namespace ft{
 		reference	operator[] (difference_type n) const {
 			return *(_ptr + n);
 		}
-
+		// Constant cast overload
+		operator VectorIterator<const T>() const {
+			return (_ptr);
+		}
 	protected:
 		pointer		_ptr;
 	};
@@ -110,37 +112,66 @@ namespace ft{
 	bool operator==(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
 		return lhs.base() == rhs.base();
 	}
+	template <class T, class T1>
+	bool operator==(const VectorIterator<T>& lhs, const VectorIterator<T1>& rhs) {
+		return lhs.base() == rhs.base();
+	}
 	template <class T>
 	bool operator!=(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
+		return lhs.base() != rhs.base();
+	}
+	template <class T, class T1>
+	bool operator!=(const VectorIterator<T>& lhs, const VectorIterator<T1>& rhs) {
 		return lhs.base() != rhs.base();
 	}
 	template <class T>
 	bool operator>(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
 		return lhs.base() > rhs.base();
 	}
-	template <class T>
-	bool operator>=(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
-		return lhs.base() >= rhs.base();
+	template <class T, class T1>
+	bool operator>(const VectorIterator<T>& lhs, const VectorIterator<T1>& rhs) {
+		return lhs.base() > rhs.base();
 	}
 	template <class T>
 	bool operator<(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
+		return lhs.base() < rhs.base();
+	}
+	template <class T, class T1>
+	bool operator<(const VectorIterator<T>& lhs, const VectorIterator<T1>& rhs) {
 		return lhs.base() < rhs.base();
 	}
 	template <class T>
 	bool operator<=(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
 		return lhs.base() <= rhs.base();
 	}
+	template <class T, class T1>
+	bool operator<=(const VectorIterator<T>& lhs, const VectorIterator<T1>& rhs) {
+		return lhs.base() <= rhs.base();
+	}
+	template <class T>
+	bool operator>=(const VectorIterator<T>& lhs, const VectorIterator<T>& rhs) {
+		return lhs.base() >= rhs.base();
+	}
+	template <class T, class T1>
+	bool operator>=(const VectorIterator<T>& lhs, const VectorIterator<T1>& rhs) {
+		return lhs.base() >= rhs.base();
+	}
 	// COMPUTES THE DISTANCE BETWEEN TWO ITERATOR ADAPTORS
-	template<class Iterator>
-	typename VectorIterator<Iterator>::difference_type
-		operator-(	const VectorIterator<Iterator>& lhs, const VectorIterator<Iterator>& rhs ) {
-			return rhs.base() - lhs.base();
+	template<class T>
+	typename VectorIterator<T>::difference_type
+		operator-(	const VectorIterator<T>& lhs, const VectorIterator<T>& rhs ) {
+			return lhs.base() - rhs.base();
+	}
+	template<class T1, class T2>
+	typename VectorIterator<T1>::difference_type
+		operator-(	const VectorIterator<T1>& lhs, const VectorIterator<T2>& rhs ) {
+			return lhs.base() - rhs.base();
 	}
 	// ADVANCES THE ITERATOR
-	template<class Iterator>
-	VectorIterator<Iterator>
-		operator+( typename VectorIterator<Iterator>::difference_type n, const VectorIterator<Iterator>& it ) {
-			return VectorIterator<Iterator>(it.base() + n);
+	template<class T>
+	VectorIterator<T>operator+( typename VectorIterator<T>::difference_type n,
+										const VectorIterator<T>& it ) {
+			return VectorIterator<T>(it.base() + n);
 	}
 }
 

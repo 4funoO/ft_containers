@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/19 11:22:35 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/23 17:35:24 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/27 20:01:19 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ namespace ft{
 	}
 
 	template <class T> 
-	void	swap(const T& x, const T& y) {
+	void	swap(T& x, T& y) {
 		T z = x;
 
 		x = y;

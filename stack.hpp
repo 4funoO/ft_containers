@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:41 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/14 17:48:16 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/28 19:29:09 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,14 @@
 # include "vector.hpp"
 
 namespace ft {
-	template<class T, class Container = ft::vector<T>>
+	template<class T, class Container = ft::vector<T> >
 	class stack	{
 		public:
-			typedef	T							value_type;
-			typedef Container					container_type;
-			typedef	Container::size_type		size_type;
+			typedef	T									value_type;
+			typedef Container							container_type;
+			typedef	typename Container::size_type		size_type;
+			typedef typename Container::const_reference	const_reference;
+			typedef typename Container::reference		reference;
 
 			template< class T1, class T2 >
 			friend bool	operator==( const ft::stack<T1,T2>& lhs, const ft::stack<T1,T2>& rhs );
@@ -40,7 +42,7 @@ namespace ft {
 			Container	c;
 
 		public:
-			explicit stack(const container_type& ctnr = container_type()) : c(other.c) { }
+			explicit stack(const container_type& ctnr = container_type()) : c(ctnr) { }
 			~stack() { }
 
 			stack& operator=( const stack& other ) { this->c = other.c; return (*this); }
