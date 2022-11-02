@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/02 12:27:04 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/02 19:18:16 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,22 +34,20 @@ public:
 	typedef	T			value_type;
 	typedef Compare		value_compare;
 	typedef Allocator	allocator_type;
+	typedef Allocator	node_allocator_type;
 
 private:
-	Node*				_root;
-	allocator_type		_alloc;
-	value_compare		_compare;
+	Node*					_root;
+	Node*					_base;
+	node_allocator_type		_alloc;
+	value_compare			_compare;
 
 public:
-	tree(const allocator_type& compare = value_compare,
-		const allocator_type& alloc = allocator_type())
-		: _root(nullptr), _alloc(alloc), _compare(compare) { }
-	~tree() {
-		// for (TreeIterator it = begin(), TreeIterator end = end(); it != end(); it++) {
-		// 	_alloc.destroy(&(*it));
-		// 	_alloc.deallocate(&(*it), 1);
-		// }
-	}
+	tree(const value_compare& compare = value_compare)
+		: _base(nullptr), _root(_vallocate()), _compare(compare) { 
+			_root->red = false;
+		}
+	~tree() {}
 	//TREE MANIPULATION
 		//1)Left Rotation
 	void	rotate_left(Node* x) {
@@ -68,7 +66,7 @@ public:
 					x->parent->right = y;
 			}
 			else
-				_root = y;
+				_base = y;
 			x->parent = y;
 		}
 	}
@@ -89,7 +87,7 @@ public:
 					x->parent->right = y;
 			}
 			else
-				_root = y;
+				_base = y;
 			x->parent = y;
 		}
 	}
@@ -101,36 +99,38 @@ public:
 			x.red = true;
 	}
 		//4)Insertion
-	void	insert_node(const value_type& val) {
-		if (_root == nullptr) {
-			_root = _nallocate(val);
-			_root->red = false;
-			return;
+	bool	insert_node(const value_type& val) {
+		if (_base == nullptr) {
+			_base = _nallocate(val);
+			_base->red = false;
+			_base->parent = _root;
+			return true;
 		}
-		for ( Node* tmp = _root; tmp != nullptr; ) {
+		for ( Node* tmp = _base; tmp != nullptr; ) {
 			if (!_compare(tmp->value->key, val->key)) {
 				if (!_compare(val->key, tmp->value->key))
-					return ;
+					return false;
 				if (tmp->left == nullptr) {
 					tmp->left = _nallocate(val);
-					_insertbalance(tmp->left, true)
-					return ;
+					_ins_balance(tmp->left, true)
+					return true;
 				}
 				tmp = tmp->left;
 			}
 			else {
 				if (tmp->right == nullptr) {
 					tmp->left = _nallocate(val);
-					_insertbalance(tmp->left, false)
-					return ;
+					_ins_balance(tmp->left, false)
+					return true;
 				}
 				tmp = tmp->right;
 			}
 		}
+		return false;
 	}
 		//5) Find
 	Node*	find(const Key& key) {
-		for ( Node* tmp = _root; tmp != nullptr; ) {
+		for ( Node* tmp = _base; tmp != nullptr; ) {
 			if (!_compare(tmp->value->key, val->key)) {
 				if (!_compare(val->key, tmp->value->key))
 					return tmp;
@@ -147,18 +147,17 @@ public:
 		}
 	}
 		//6) Deletion
-	void	delete_node (Node* position) {
-		if (position->red == true || (position->left == nullptr && position->right == nullptr))
-			_no_rebalancing_deletion(position);
-		else
-			_rebalancing_deletion(position);
+	void	delete_node (Node* pos) {
+		if (pos == nullptr || pos == _root)
+			return ;
+		_rb_deletion(pos);
 	}
 
-private:
+protected:
 	// UTILS
 		// 1) Node Allocation
 	Node*	_nallocate (const value_type& val) {
-		Node *new_node = _alloc.allocate(1);
+		Node* new_node = _alloc.allocate(1);
 		try	{
 			_alloc.construct(new_node, val);
 		}
@@ -170,18 +169,18 @@ private:
 		return (new_node);
 	}
 		// 2) Delete Node
-	void	_ndelete (Node* position) {
+	void	_del_node (Node* pos) {
 		try	{
-				_alloc.destroy(&(*position));
+				_alloc.destroy(pos);
 			}
 			catch(...) {
-				_alloc.deallocate(position, 1);
+				_alloc.deallocate(pos, 1);
 			}
-			_alloc.deallocate(position, 1);
+			_alloc.deallocate(pos, 1);
 	}
 		// 3) Balance Tree Insertion
-	void	_insertbalance (Node* Kid, bool left_child) {
-		for ( Node*	Uncle = nullptr; Kid != _root && Kid->parent->red == true; ) {
+	void	_ins_balance (Node* Kid, bool left_child) {
+		for ( Node*	Uncle = nullptr; Kid != _base && Kid->parent->red == true; ) {
 			if (Kid->parent == Kid->parent->parent->right) {
 				Uncle = Kid->parent->parent->left;
 				if (Uncle->red == true) {
@@ -193,13 +192,13 @@ private:
 						Kid = Kid->parent;
 						rotate_right(Kid);
 					}
-					_balance_case2(Kid);
+					_ins_balance_case2(Kid);
 				}
 			}
 			else {
 				Uncle = Kid->parent->parent->right;
 				if (Uncle->red == true) {
-					_balance_case1(Kid, Uncle);
+					_ins_balance_case1(Kid, Uncle);
 					Kid = Kid->parent->parent;
 				}
 				else {
@@ -207,98 +206,131 @@ private:
 						Kid = Kid->parent;
 						rotate_left(Kid);
 					}
-					_balance_case3(Kid);
+					_ins_balance_case3(Kid);
 				}
 			}
 		}
-		_root->red = false;
+		_base->red = false;
 	}
-		// 3) Balncing insertion cases
+		// 4) Balncing insertion cases
 		 // If Uncle is red colour -> colors to be flipped -> Uncle and Parent become black, Grandparent red
-	void	_balance_case1(Node* Kid, Node* Uncle) {
+	void	_ins_balance_case1(Node* Kid, Node* Uncle) {
 		Kid->parent->red = false;
 		Uncle->red = false;
-		if (Kid->parent->parent != _root)
+		if (Kid->parent->parent != _base)
 			Kid->parent->parent->red = true;
 	}
 		 //b) Uncle is black, Parent is right child and kid is right child
-	void	_balance_case2(Node* Kid) {
+	void	_ins_balance_case2(Node* Kid) {
 		Kid->parent->red = false;
 		Kid->parent->parent->red = true;
 		rotate_left(Kid->parent->parent);
 	}
 		 //c) Uncle is black, Parent is right child and kid is left child
-	void	_balance_case3(Node* Kid) {
+	void	_ins_balance_case3(Node* Kid) {
 		Kid->parent->red = false;
 		Kid->parent->parent->red = true;
 		rotate_right(Kid->parent->parent);
 	}
-		// 2) Balance Tree Deletion
-	void	_insertbalance (Node* Kid, bool left_child) {
-		for ( Node*	Uncle = nullptr; Kid != _root && Kid->parent->red == true; ) {
-			if (Kid->parent == Kid->parent->parent->right) {
-				Uncle = Kid->parent->parent->left;
-				if (Uncle->red == true) {
-					balance_case1(Kid, Uncle);
-					Kid = Kid->parent->parent;
-				}
-				else {
-					if (left_child == true) {
-						Kid = Kid->parent;
-						rotate_right(Kid);
-					}
-					_balance_case2(Kid);
-				}
-			}
-			else {
-				Uncle = Kid->parent->parent->right;
-				if (Uncle->red == true) {
-					_balance_case1(Kid, Uncle);
-					Kid = Kid->parent->parent;
-				}
-				else {
-					if (left_child == false) {
-						Kid = Kid->parent;
-						rotate_left(Kid);
-					}
-					_balance_case3(Kid);
-				}
-			}
+		// 5) Deleting Node from tree
+	void	_del_node(Node* pos) {
+		bool	is_red = pos->red;
+
+		if (pos->left == nullptr) {
+			pos = pos->right;
+			_del_changenodes(pos, pos->right);
 		}
-		_root->red = false;
-	}
-		// 3) Deleting Node from tree regular
-	void _no_rebalancing_deletion(Node* position) {
-		if (position == _root)
-			_root = nullptr;
+		else if (pos->right == nullptr) {
+			pos = pos->left;
+			_del_changenodes(pos, pos->left);
+		}
 		else {
-			if (position->left == nullptr) {
-				if (position == position->parent->left)
-					position->parent->left = position->right;
-				else
-					position->parent->right = position->right;
-				if (position->right != nullptr)
-					position->right->parent = position->parent;
+			Node* tmp1 = node_minimum(pos->right);
+			Node* tmp2 = tmp1->right;
+			is_red = tmp1->red;
+			if (tmp1->parent == pos)
+				tmp2->parent = tmp1;
+			else {
+				_del_changenodes(tmp1, tmp1->right);
+				tmp1->right = pos->right;
+				tmp1->right->parent = tmp1
 			}
-			else if (position->right == nullptr) {
-				if (position == position->parent->left)
-					position->parent->left = position->left;
-				else
-					position->parent->right = position->left;
-				position->left->parent = position->parent;
+			_del_changenodes(pos, tmp1);
+			tmp1->left = pos->left;
+			tmp1->left->parent = tmp1;
+			tmp1->red = pos->red;
+		}
+		_ndealloc (tmp);
+		if (is_red == false)
+			_del_rebalance(pos);
+	}
+		 // a) Rebalancing tree after deletion
+	void _del_rebalance(Node* pos) {
+		for (Node* sib = nullptr; pos != _root && pos->red == false;) {
+			if (pos == pos->parent->left) {
+				sib = pos->parent->right;
+				if (sib->red == true) {
+					sib->red = false;
+					pos->parent->red = true;
+					rotate_left(pos->parent);
+					sib = pos->parent->right;
+				}
+				if (sib->left->red == false && sib->right->red == false) {
+					sib->red = true;
+					pos = pos->parent;
+				}
+				else {
+					if (sib->right->red == false) {
+						sib->left->red = false;
+						sib->red = true;
+						rotate_right(sib);
+						sib = pos->parent->right;
+					}
+					sib->red = pos->parent->red;
+					pos->parent->red = false;
+					s->right->red = false;
+					rotate_left(pos->parent);
+					pos = _root;
+				}
 			}
 			else {
-				Node* tmp = node_minimum(position->right);
-				position->value = tmp->value;
-				tmp->parent->right = nullptr;
-				position = tmp;
+				sib = pos->parent->left;
+				if (sib->red == true) {
+					sib->red = false;
+					pos->parent->red = true;
+					rotate_right(pos->parent);
+					sib = pos->parent->left;
+				}
+				if (sib->right->red == false && sib->left->red == false) {
+					sib->red = true;
+					pos = pos->parent;
+				}
+				else {
+					if (sib->left->red == false) {
+						sib->right->red = false;
+						sib->red = true;
+						rotate_left(sib);
+						sib = pos->parent->left;
+					}
+					sib->red = pos->parent->red;
+					pos->parent->red = false;
+					sib->left->red = false;
+					rotate_right(pos->parent);
+					pos = _root;
+				}
 			}
 		}
-		_ndelete (position);
+		pos->red = false;
 	}
-		// 4) Rebalancing tree after deletion
-	void _rebalancing_deletion(Node* position) {
-		
+		// Replaces node 'pos' with a node 'other_pos'
+	void _del_changenodes(Node* pos, Node* other_pos) {
+		if (pos->parent == _root)
+			_base = pos;
+		else if (pos == pos->parent->left)
+			pos->parent->left = other_pos;
+		else
+			pos->right->parent = other_pos;
+		other_pos->parent = pos->parent;
 	}
 	// Min/Max search functions
 	Node*	node_maximum (Node* current) {
