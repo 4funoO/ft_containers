@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:04:46 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/19 11:17:56 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/10/31 12:18:23 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,8 @@
 # define UTILITY_HPP
 
 namespace ft{
-	template <class T1, class T2> struct pair {
+	template <class T1, class T2>
+	struct pair {
 		public:
 			typedef	T1		first_type;
 			typedef	T2		second_type;
