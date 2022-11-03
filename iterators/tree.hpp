@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/02 19:18:16 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/03 17:18:42 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,25 +28,25 @@ struct Node
 	bool		red;
 };
 //TREE IMPLEMENTATION
-template<class Key, class T, class Compare,	class Allocator>
+template<class T, class Compare,	class Allocator>
 class tree {
 public:
-	typedef	T			value_type;
-	typedef Compare		value_compare;
-	typedef Allocator	allocator_type;
-	typedef Allocator	node_allocator_type;
+	typedef	T															value_type;
+	typedef Compare														value_compare;
+	typedef Allocator													allocator_type;
+	typedef typename Alloc::template rebind<TNode<value_type> >::other	node_allocator;
 
 private:
 	Node*					_root;
 	Node*					_base;
-	node_allocator_type		_alloc;
+	node_allocator			_alloc;
 	value_compare			_compare;
 
 public:
 	tree(const value_compare& compare = value_compare)
 		: _base(nullptr), _root(_vallocate()), _compare(compare) { 
 			_root->red = false;
-		}
+	}
 	~tree() {}
 	//TREE MANIPULATION
 		//1)Left Rotation
@@ -145,6 +145,7 @@ public:
 				tmp = tmp->right;
 			}
 		}
+		return nullptr;
 	}
 		//6) Deletion
 	void	delete_node (Node* pos) {
@@ -349,9 +350,9 @@ protected:
 			return node_minimum(current->right);
 		}
 		Node*	Par = current->parent;
-		while (Par != nullptr && current == Par->right) {
+		while (Par != _base && current == Par->right) {
 			current = Par;
-			Par->Par->parent;
+			Par = Par->parent;
 		}
 		return Par;
 	}
@@ -360,9 +361,9 @@ protected:
 			return node_maximum(current->left);
 		}
 		Node*	Par = current->parent;
-		while (Par != nullptr && current == Par->left) {
+		while (Par != _base && current == Par->left) {
 			current = Par;
-			Par->Par->parent;
+			Par = Par->parent;
 		}
 		return Par;
 	}
