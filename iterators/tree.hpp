@@ -6,133 +6,100 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/03 17:18:42 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/04 19:16:39 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef TREE_HPP
 # define TREE_HPP
 
-# include "utility.hpp"
+# include "../utility.hpp"
 # include "TreeIterator.hpp"
+# include "../algorithm.hpp"
 
 namespace ft {
-//NODE STRUCT
-template <typename T>
-struct Node
-{
-	T			value;
-	Node*		left;
-	Node*		right;
-	Node*		parent;
-	bool		red;
-};
 //TREE IMPLEMENTATION
-template<class T, class Compare,	class Allocator>
+template<class T, class Compare, class Allocator>
 class tree {
 public:
-	typedef	T															value_type;
-	typedef Compare														value_compare;
-	typedef Allocator													allocator_type;
-	typedef typename Alloc::template rebind<TNode<value_type> >::other	node_allocator;
+	typedef T														value_type;
+	typedef Node<T>													node_type;
+	typedef node_type*												pointer;
+	typedef Compare													value_compare;
+	typedef Allocator												allocator_type;
+	typedef typename Allocator::template rebind<Node<T> >::other	node_allocator;
+	typedef typename allocator_type::size_type						size_type;
+	typedef typename ft::TreeIterator<pointer>			 			iterator;
+	typedef typename ft::TreeIterator<const pointer>				const_iterator;
+	typedef typename ft::reverse_iterator<iterator>					reverse_iterator;
+	typedef typename ft::reverse_iterator<const_iterator>			const_reverse_iterator;
 
-private:
-	Node*					_root;
-	Node*					_base;
-	node_allocator			_alloc;
+protected:
+	pointer					_root;
+	pointer					_head;
+	node_allocator			_node_alloc;
+	allocator_type			_alloc;
 	value_compare			_compare;
 
 public:
-	tree(const value_compare& compare = value_compare)
-		: _base(nullptr), _root(_vallocate()), _compare(compare) { 
-			_root->red = false;
+	//  CONSTRUCTORS AND DESTRUCTOR
+	tree(const value_compare& compare = value_compare(), const allocator_type& alloc = allocator_type())
+		: _head(nullptr), _root(_null_leaf_alloc()), _compare(compare), _alloc(alloc), _node_alloc(alloc) { }
+	tree (const tree& x) :	_root(x._root), _head(x._head), _node_alloc(x._node_alloc),
+							_alloc(x._alloc), _compare(x._compare) { }
+	~tree() { 
+		remove_tree();
+		_node_alloc.deallocate(_head, 1);
 	}
-	~tree() {}
-	//TREE MANIPULATION
-		//1)Left Rotation
-	void	rotate_left(Node* x) {
-		Node* y = x->right;
+	tree& operator= (const tree& x) {
+		_root = x._root;
+		_head = x._head;
+		_node_alloc = x._node_alloc;
+		_alloc = x._alloc;
+		_compare = x._compare;
+	}
 
-		if (y) {
-			x->right = y->left;
-			if (y->left)
-				y->left->parent = x;
-			y->left = x;
-			y->parent = x->parent;
-			if (x->parent) {
-				if (x->parent->left == x)
-					x->parent->left = y;
-				else
-					x->parent->right = y;
-			}
-			else
-				_base = y;
-			x->parent = y;
-		}
+	size_type	size_max () { return _node_alloc.max_size(); }
+	size_type	size () {
+		size_type result = 0;
+		for (pointer tmp = node_minimum(_head); tmp != _root; tmp = successor(tmp))
+			result++;
+		return result;
 	}
-		//2)Right Rotation
-	void	rotate_right(Node* x) {
-		Node* y = x->left;
-
-		if (y) {
-			x->left = y->right;
-			if (y->right)
-				y->right->parent = x;
-			y->right = x;
-			y->parent = x->parent;
-			if (x->parent) {
-				if (x->parent->left == x)
-					x->parent->left = y;
-				else
-					x->parent->right = y;
-			}
-			else
-				_base = y;
-			x->parent = y;
+	// 1)Insertion of single element
+	ft::pair<iterator, bool> insert(const value_type& val) {
+		if (_head == nullptr) {
+			_head = _nallocate(val);
+			_head->red = false;
+			_head->parent = _root;
+			return ft::make_pair(iterator(_head), true);
 		}
-	}
-		//3)Recolour
-	void	recolor_node(const Node& x) {
-		if (x.red == true)
-			x.red = false;
-		else
-			x.red = true;
-	}
-		//4)Insertion
-	bool	insert_node(const value_type& val) {
-		if (_base == nullptr) {
-			_base = _nallocate(val);
-			_base->red = false;
-			_base->parent = _root;
-			return true;
-		}
-		for ( Node* tmp = _base; tmp != nullptr; ) {
+		for ( pointer tmp = _head; tmp != nullptr; ) {
 			if (!_compare(tmp->value->key, val->key)) {
 				if (!_compare(val->key, tmp->value->key))
-					return false;
+					return ft::make_pair(iterator(tmp), false);
 				if (tmp->left == nullptr) {
 					tmp->left = _nallocate(val);
-					_ins_balance(tmp->left, true)
-					return true;
+					_ins_balance(tmp->left, true);
+					return ft::make_pair(iterator(tmp->left), true);
 				}
 				tmp = tmp->left;
 			}
 			else {
 				if (tmp->right == nullptr) {
-					tmp->left = _nallocate(val);
-					_ins_balance(tmp->left, false)
-					return true;
+					tmp->right = _nallocate(val);
+					_ins_balance(tmp->right, false);
+					return ft::make_pair(iterator(tmp->right), true);
 				}
 				tmp = tmp->right;
 			}
 		}
-		return false;
 	}
-		//5) Find
-	Node*	find(const Key& key) {
-		for ( Node* tmp = _base; tmp != nullptr; ) {
-			if (!_compare(tmp->value->key, val->key)) {
-				if (!_compare(val->key, tmp->value->key))
+	// 2) Find
+	pointer find(const value_type& key) {
+		for ( pointer tmp = _head; tmp != nullptr; ) {
+			if (!_compare(tmp->value, key)) {
+				if (!_compare(key, tmp->value))
 					return tmp;
 				if (tmp->left == nullptr)
 					return nullptr;
@@ -147,41 +114,173 @@ public:
 		}
 		return nullptr;
 	}
-		//6) Deletion
-	void	delete_node (Node* pos) {
+	// 3) Deletion
+	void	erase (pointer pos) {
 		if (pos == nullptr || pos == _root)
 			return ;
 		_rb_deletion(pos);
 	}
+	void	clear() {
+		for (pointer tmp = node_minimum(_head); tmp != _root; tmp = successor(tmp)) {
+			try	{
+				_alloc.destroy(tmp->value);
+			}
+			catch(...) {
+				remove_tree();
+			}
+		}
+		_head = nullptr;
+	}
+	// 4) Swap
+	void swap (tree& x) {
+		ft::swap(_root, x._root);
+		ft::swap(_head, x._head);
+		ft::swap(_node_alloc, x._node_alloc);
+		ft::swap(_alloc, x._alloc);
+		ft::swap(_compare, x._compare);
+	}
+	// 5) Count
+	size_type count (const value_type& k) const {
+		if ( find(k) == _root)
+			return 0;
+		return 1;
+	}
+	// 6) lower/upper bound
+		
+	// Min/Max search functions
+	pointer	node_maximum (pointer current) {
+		while (current->right != nullptr)
+			current = current->right;
+		return current;
+	}
+	pointer	node_minimum (pointer current) {
+		while (current->left != nullptr)
+			current = current->left;
+		return current;	
+	}
+	// Predecessor/successor functions
+	pointer	successor (pointer current) {
+		if (current->right != nullptr) {
+			return node_minimum(current->right);
+		}
+		pointer	Par = current->parent;
+		while (Par != _root && current == Par->right) {
+			current = Par;
+			Par = Par->parent;
+		}
+		return Par;
+	}
+	pointer	predecessor (pointer current) {
+		if (current->left != nullptr) {
+			return node_maximum(current->left);
+		}
+		pointer	Par = current->parent;
+		while (Par != _root && current == Par->left) {
+			current = Par;
+			Par = Par->parent;
+		}
+		return Par;
+	}
+private:
+	//TREE MANIPULATION
+		//1)Left Rotation
+	void	rotate_left(pointer x) {
+		pointer y = x->right;
 
-protected:
+		if (y) {
+			x->right = y->left;
+			if (y->left)
+				y->left->parent = x;
+			y->left = x;
+			y->parent = x->parent;
+			if (x->parent) {
+				if (x->parent->left == x)
+					x->parent->left = y;
+				else
+					x->parent->right = y;
+			}
+			else
+				_head = y;
+			x->parent = y;
+		}
+	}
+		//2)Right Rotation
+	void	rotate_right(pointer x) {
+		pointer y = x->left;
+
+		if (y) {
+			x->left = y->right;
+			if (y->right)
+				y->right->parent = x;
+			y->right = x;
+			y->parent = x->parent;
+			if (x->parent) {
+				if (x->parent->left == x)
+					x->parent->left = y;
+				else
+					x->parent->right = y;
+			}
+			else
+				_head = y;
+			x->parent = y;
+		}
+	}
+		//3)Recolour
+	void	recolor_node(const node_type& x) {
+		if (x.red == true)
+			x.red = false;
+		else
+			x.red = true;
+	}
+	void remove_tree() {
+		for (pointer tmp = node_minimum(_head); tmp != _root; tmp = successor(tmp)) {
+			try	{
+				_del_node(tmp);
+			}
+			catch(...) {
+				if (_head != nullptr)
+					remove_tree();
+			}
+		}
+		_head = nullptr;
+	}
 	// UTILS
 		// 1) Node Allocation
-	Node*	_nallocate (const value_type& val) {
-		Node* new_node = _alloc.allocate(1);
+			// a) red node allocation
+	pointer	_nallocate (const value_type& val) {
+		pointer new_node = _node_alloc.allocate(1);
 		try	{
-			_alloc.construct(new_node, val);
+			_alloc.construct(&(new_node->value), val);
 		}
 		catch(...) {
-			_alloc.deallocate(new_node);
+			_node_alloc.deallocate(new_node, 1);
 		}
 		new_node->red = true; new_node->left = nullptr;
 		new_node->right = nullptr; new_node->parent = nullptr;
 		return (new_node);
 	}
+			// b) Null leaf allocation
+	pointer	_null_leaf_alloc() {
+		pointer new_node = _node_alloc.allocate(1);
+		new_node->red = false; new_node->left = nullptr;
+		new_node->right = nullptr; new_node->parent = nullptr;
+		return (new_node);
+	}
 		// 2) Delete Node
-	void	_del_node (Node* pos) {
-		try	{
-				_alloc.destroy(pos);
+	void	_del_node (pointer pos) {
+		if (pos->value) {
+			try	{
+				_alloc.destroy(&(pos->value));
 			}
 			catch(...) {
-				_alloc.deallocate(pos, 1);
+				_node_alloc.deallocate(pos, 1);
 			}
-			_alloc.deallocate(pos, 1);
+		}
+		_node_alloc.deallocate(pos, 1);
 	}
-		// 3) Balance Tree Insertion
-	void	_ins_balance (Node* Kid, bool left_child) {
-		for ( Node*	Uncle = nullptr; Kid != _base && Kid->parent->red == true; ) {
+		// 3) Balance Tree after Insertion
+	void	_ins_balance (pointer Kid, bool left_child) {
+		for ( pointer	Uncle = nullptr; Kid != _head && Kid->parent->red == true; ) {
 			if (Kid->parent == Kid->parent->parent->right) {
 				Uncle = Kid->parent->parent->left;
 				if (Uncle->red == true) {
@@ -211,32 +310,32 @@ protected:
 				}
 			}
 		}
-		_base->red = false;
+		_head->red = false;
 	}
-		// 4) Balncing insertion cases
+	// 4) Balncing insertion cases
 		 // If Uncle is red colour -> colors to be flipped -> Uncle and Parent become black, Grandparent red
-	void	_ins_balance_case1(Node* Kid, Node* Uncle) {
+	void	_ins_balance_case1(pointer Kid, pointer Uncle) {
 		Kid->parent->red = false;
 		Uncle->red = false;
-		if (Kid->parent->parent != _base)
+		if (Kid->parent->parent != _head)
 			Kid->parent->parent->red = true;
 	}
 		 //b) Uncle is black, Parent is right child and kid is right child
-	void	_ins_balance_case2(Node* Kid) {
+	void	_ins_balance_case2(pointer Kid) {
 		Kid->parent->red = false;
 		Kid->parent->parent->red = true;
 		rotate_left(Kid->parent->parent);
 	}
 		 //c) Uncle is black, Parent is right child and kid is left child
-	void	_ins_balance_case3(Node* Kid) {
+	void	_ins_balance_case3(pointer Kid) {
 		Kid->parent->red = false;
 		Kid->parent->parent->red = true;
 		rotate_right(Kid->parent->parent);
 	}
-		// 5) Deleting Node from tree
-	void	_del_node(Node* pos) {
+	// 5) Deleting Node from tree
+	void	_rb_deletion(pointer pos) {
 		bool	is_red = pos->red;
-
+		pointer tmp1 = pos;
 		if (pos->left == nullptr) {
 			pos = pos->right;
 			_del_changenodes(pos, pos->right);
@@ -246,28 +345,28 @@ protected:
 			_del_changenodes(pos, pos->left);
 		}
 		else {
-			Node* tmp1 = node_minimum(pos->right);
-			Node* tmp2 = tmp1->right;
+			pointer tmp2 = node_minimum(pos->right);
+			pos = tmp2->right;
 			is_red = tmp1->red;
-			if (tmp1->parent == pos)
-				tmp2->parent = tmp1;
+			if (tmp2->parent == tmp1)
+				pos->parent = tmp2;
 			else {
-				_del_changenodes(tmp1, tmp1->right);
-				tmp1->right = pos->right;
-				tmp1->right->parent = tmp1
+				_del_changenodes(tmp2, tmp2->right);
+				tmp2->right = tmp1->right;
+				tmp2->right->parent = tmp2;
 			}
-			_del_changenodes(pos, tmp1);
-			tmp1->left = pos->left;
-			tmp1->left->parent = tmp1;
-			tmp1->red = pos->red;
+			_del_changenodes(tmp1, tmp2);
+			tmp2->left = tmp1->left;
+			tmp2->left->parent = tmp2;
+			tmp2->red = tmp1->red;
 		}
-		_ndealloc (tmp);
+		_del_node(tmp1);
 		if (is_red == false)
 			_del_rebalance(pos);
 	}
 		 // a) Rebalancing tree after deletion
-	void _del_rebalance(Node* pos) {
-		for (Node* sib = nullptr; pos != _root && pos->red == false;) {
+	void _del_rebalance(pointer pos) {
+		for (pointer sib = nullptr; pos != _root && pos->red == false;) {
 			if (pos == pos->parent->left) {
 				sib = pos->parent->right;
 				if (sib->red == true) {
@@ -289,7 +388,7 @@ protected:
 					}
 					sib->red = pos->parent->red;
 					pos->parent->red = false;
-					s->right->red = false;
+					sib->right->red = false;
 					rotate_left(pos->parent);
 					pos = _root;
 				}
@@ -323,49 +422,15 @@ protected:
 		}
 		pos->red = false;
 	}
-		// Replaces node 'pos' with a node 'other_pos'
-	void _del_changenodes(Node* pos, Node* other_pos) {
+	// Replaces node 'pos' with a node 'other_pos'
+	void _del_changenodes(pointer pos, pointer other_pos) {
 		if (pos->parent == _root)
-			_base = pos;
+			_head = pos;
 		else if (pos == pos->parent->left)
 			pos->parent->left = other_pos;
 		else
 			pos->right->parent = other_pos;
 		other_pos->parent = pos->parent;
-	}
-	// Min/Max search functions
-	Node*	node_maximum (Node* current) {
-		while (current->right != nullptr)
-			current = current->right;
-		return current;
-	}
-	Node*	node_minimum (Node* current) {
-		while (current->left != nullptr)
-			current = current->left;
-		return current;	
-	}
-	// Predecessor/successor functions
-	Node*	successor (Node* current) {
-		if (current->right != nullptr) {
-			return node_minimum(current->right);
-		}
-		Node*	Par = current->parent;
-		while (Par != _base && current == Par->right) {
-			current = Par;
-			Par = Par->parent;
-		}
-		return Par;
-	}
-	Node*	predecessor (Node* current) {
-		if (current->left != nullptr) {
-			return node_maximum(current->left);
-		}
-		Node*	Par = current->parent;
-		while (Par != _base && current == Par->left) {
-			current = Par;
-			Par = Par->parent;
-		}
-		return Par;
 	}
 };
 }

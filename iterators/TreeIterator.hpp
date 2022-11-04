@@ -26,25 +26,36 @@
 # define TREEITERATOR_HPP
 
 # include "iterator.hpp"
-# include "../map.hpp"
 
-namespace ft{
-	//VECTOR ITERATORS
+namespace ft {
+	//NODE STRUCT
+	template <typename T>
+	struct Node
+	{
+		T			value;
+		Node*		left;
+		Node*		right;
+		Node*		parent;
+		bool		red;
+	};
+	//MAP ITERATORS
 	template <class T>
 	class TreeIterator {
 	public:
-		typedef	T*															iterator_type;
-		typedef typename iterator_traits<iterator_type>::value_type			value_type;
-    	typedef typename iterator_traits<iterator_type>::difference_type	difference_type;
-    	typedef typename iterator_traits<iterator_type>::pointer			pointer;
-    	typedef typename iterator_traits<iterator_type>::reference			reference;
-		typedef typename iterator_traits<iterator_type>::iterator_category	iterator_category;
+		typedef T															value_type;
+		typedef	Node<T>														node_type;
+    	typedef node_type*													pointer;
+		typedef node_type&													reference;
+    	typedef const node_type&											const_reference;
+    	typedef ptrdiff_t													difference_type;
+		typedef typename ft::bidirectional_iterator_tag						iterator_category;
+		typedef size_t														size_type;
 
 	// CONSTRUCTORS
 		// 1) Default
 		TreeIterator() : _ptr() { }
 		// 2) Initialization
-		TreeIterator(const iterator_type& ptr) : _ptr(ptr) { }
+		TreeIterator(const_reference ptr) : _ptr(ptr) { }
 		// 3) Copy
 		TreeIterator ( const TreeIterator& x ) { _ptr = x.base(); }
 	// ASSIGN OPERATOR
@@ -62,7 +73,14 @@ namespace ft{
 		}
 		// Pre-increment iterator position
 		TreeIterator&	operator++() {
-			++_ptr;
+			if (_ptr->right != nullptr) {
+				_ptr = _ptr->right;
+				while (_ptr->left != nullptr)
+					_ptr = _ptr->left;
+				return *this;
+			}
+			for (pointer tmp = _ptr, _ptr = _ptr->parent; _ptr != nullptr && tmp == _ptr->right; tmp = _ptr) 
+				_ptr = _ptr->parent;
 			return *this;
 		}
 		// Post-increment iterator position
@@ -73,15 +91,28 @@ namespace ft{
 		}
 		// Dereference iterator
 		reference	operator*() const {
-			return *_ptr;
+			return _ptr->value;
+		}
+		reference	operator*() {
+			return _ptr->value;
 		}
 		// Dereference iterator
 		pointer operator->() const {
-			return _ptr;
+			return &(_ptr->value);
+		}
+		pointer operator->() {
+			return &(_ptr->value);
 		}
 		// Pre-decrement iterator position
 		TreeIterator&	operator--() {
-			--_ptr;
+			if (_ptr->left != nullptr) {
+				_ptr = _ptr->left;
+				while (_ptr->right != nullptr)
+					_ptr = _ptr->right;
+				return *this;
+			}
+			for (pointer tmp = _ptr, _ptr = _ptr->parent; _ptr != nullptr && tmp == _ptr->left; tmp = _ptr)
+				_ptr = _ptr->parent;
 			return *this;
 		}
 		// Post-decrement iterator position
@@ -92,29 +123,17 @@ namespace ft{
 		}
 		// Addition operator
 		TreeIterator	operator+ (difference_type n) const {
-			return TreeIterator(_ptr + n);
-		}
-		// Advance iterator
-		TreeIterator&	operator+= (difference_type n) {
-			_ptr += n;
-			return *this;
+			TreeIterator temp = *this;
+			for (size_type i = 0; i < n; i++)
+				temp++;
+			return temp;
 		}
 		// Subtraction operator
 		TreeIterator	operator- (difference_type n) const {
-			return TreeIterator(_ptr - n);
-		}
-		// Retrocede iterator
-		TreeIterator&	operator-= (difference_type n) {
-			_ptr -= n;
-			return *this;
-		}
-		// Dereference iterator with offset
-		reference	operator[] (difference_type n) const {
-			return *(_ptr + n);
-		}
-		// Constant cast overload
-		operator TreeIterator<const T>() const {
-			return (_ptr);
+			TreeIterator temp = *this;
+			for (size_type i = 0; i < n; i++)
+				temp--;
+			return temp;
 		}
 	protected:
 		pointer		_ptr;
@@ -136,60 +155,6 @@ namespace ft{
 	template <class T, class T1>
 	bool operator!=(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
 		return lhs.base() != rhs.base();
-	}
-	template <class T>
-	bool operator>(const TreeIterator<T>& lhs, const TreeIterator<T>& rhs) {
-		return lhs.base() > rhs.base();
-	}
-	template <class T, class T1>
-	bool operator>(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
-		return lhs.base() > rhs.base();
-	}
-	template <class T>
-	bool operator<(const TreeIterator<T>& lhs, const TreeIterator<T>& rhs) {
-		return lhs.base() < rhs.base();
-	}
-	template <class T, class T1>
-	bool operator<(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
-		return lhs.base() < rhs.base();
-	}
-	template <class T>
-	bool operator<=(const TreeIterator<T>& lhs, const TreeIterator<T>& rhs) {
-		return lhs.base() <= rhs.base();
-	}
-	template <class T, class T1>
-	bool operator<=(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
-		return lhs.base() <= rhs.base();
-	}
-	template <class T>
-	bool operator>=(const TreeIterator<T>& lhs, const TreeIterator<T>& rhs) {
-		return lhs.base() >= rhs.base();
-	}
-	template <class T, class T1>
-	bool operator>=(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
-		return lhs.base() >= rhs.base();
-	}
-	// COMPUTES THE DISTANCE BETWEEN TWO ITERATOR ADAPTORS
-	template<class Iterator>
-	typename TreeIterator<Iterator>::difference_type
-		operator-(	const TreeIterator<Iterator>& lhs, const TreeIterator<Iterator>& rhs ) {
-			return lhs.base() - rhs.base();
-	}
-	template<class Iterator, class Iterator2>
-	typename TreeIterator<Iterator>::difference_type
-		operator-(	const TreeIterator<Iterator>& lhs, const TreeIterator<Iterator2>& rhs ) {
-			return lhs.base() - rhs.base();
-	}
-	// ADVANCES THE ITERATOR
-	template<class Iterator>
-	TreeIterator<Iterator>operator+( typename TreeIterator<Iterator>::difference_type n,
-										const TreeIterator<Iterator>& it ) {
-			return TreeIterator<Iterator>(it.base() + n);
-	}
-	template<class Iterator, class Iterator2>
-	TreeIterator<Iterator>operator+( typename TreeIterator<Iterator>::difference_type n,
-										const TreeIterator<Iterator2>& it ) {
-			return TreeIterator<Iterator>(it.base() + n);
 	}
 }
 

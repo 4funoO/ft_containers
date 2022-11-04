@@ -66,5 +66,8 @@
 
 int main () 
 {
-	
+	ft::map<int, char>	map;
+
+	map[3] = 't';
+	return 0;
 }
