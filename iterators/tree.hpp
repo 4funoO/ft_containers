@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/04 19:16:39 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/05 18:42:21 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,48 +19,50 @@
 
 namespace ft {
 //TREE IMPLEMENTATION
-template<class T, class Compare, class Allocator>
+template<class Key, class T, class Compare, class Allocator>
 class tree {
 public:
-	typedef T														value_type;
-	typedef Node<T>													node_type;
-	typedef node_type*												pointer;
-	typedef Compare													value_compare;
-	typedef Allocator												allocator_type;
-	typedef typename Allocator::template rebind<Node<T> >::other	node_allocator;
-	typedef typename allocator_type::size_type						size_type;
-	typedef typename ft::TreeIterator<pointer>			 			iterator;
-	typedef typename ft::TreeIterator<const pointer>				const_iterator;
-	typedef typename ft::reverse_iterator<iterator>					reverse_iterator;
-	typedef typename ft::reverse_iterator<const_iterator>			const_reverse_iterator;
+	typedef T																	value_type;
+	typedef Key																	key_type;
+	typedef Node<T>																node_type;
+	typedef node_type*															pointer;
+	typedef Compare																value_compare;
+	typedef Allocator															allocator_type;
+	typedef typename Allocator::template rebind<Node<T> >::other				node_allocator;
+	typedef typename allocator_type::size_type									size_type;
+	typedef typename ft::TreeIterator<value_type, node_type> 					iterator;
+	typedef typename ft::TreeIterator<const value_type, const Node<T> >			const_iterator;
+	typedef typename ft::reverse_iterator<iterator>								reverse_iterator;
+	typedef typename ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
 protected:
+	allocator_type			_alloc;
+	node_allocator			_node_alloc;
+	value_compare			_compare;
 	pointer					_root;
 	pointer					_head;
-	node_allocator			_node_alloc;
-	allocator_type			_alloc;
-	value_compare			_compare;
 
 public:
 	//  CONSTRUCTORS AND DESTRUCTOR
 	tree(const value_compare& compare = value_compare(), const allocator_type& alloc = allocator_type())
-		: _head(nullptr), _root(_null_leaf_alloc()), _compare(compare), _alloc(alloc), _node_alloc(alloc) { }
-	tree (const tree& x) :	_root(x._root), _head(x._head), _node_alloc(x._node_alloc),
-							_alloc(x._alloc), _compare(x._compare) { }
+		: _alloc(alloc), _node_alloc(alloc), _compare(compare), _root(_null_leaf_alloc()), _head(nullptr) { }
+	tree (const tree& x) :	_alloc(x._alloc), _node_alloc(x._node_alloc), _compare(x._compare),
+							_root(x._root), _head(x._head) { }
 	~tree() { 
 		remove_tree();
 		_node_alloc.deallocate(_head, 1);
 	}
 	tree& operator= (const tree& x) {
+		_alloc = x._alloc;
+		_node_alloc = x._node_alloc;
+		_compare = x._compare;
 		_root = x._root;
 		_head = x._head;
-		_node_alloc = x._node_alloc;
-		_alloc = x._alloc;
-		_compare = x._compare;
+		return *this;
 	}
 
-	size_type	size_max () { return _node_alloc.max_size(); }
-	size_type	size () {
+	size_type	max_size () const { return _node_alloc.max_size(); }
+	size_type	size () const {
 		size_type result = 0;
 		for (pointer tmp = node_minimum(_head); tmp != _root; tmp = successor(tmp))
 			result++;
@@ -72,14 +74,16 @@ public:
 			_head = _nallocate(val);
 			_head->red = false;
 			_head->parent = _root;
+			_root->left = _head;
 			return ft::make_pair(iterator(_head), true);
 		}
 		for ( pointer tmp = _head; tmp != nullptr; ) {
-			if (!_compare(tmp->value->key, val->key)) {
-				if (!_compare(val->key, tmp->value->key))
+			if (!_compare(tmp->value.first, val.first)) {
+				if (!_compare(val.first, tmp->value.first))
 					return ft::make_pair(iterator(tmp), false);
 				if (tmp->left == nullptr) {
 					tmp->left = _nallocate(val);
+					tmp->left->parent = tmp;
 					_ins_balance(tmp->left, true);
 					return ft::make_pair(iterator(tmp->left), true);
 				}
@@ -88,18 +92,27 @@ public:
 			else {
 				if (tmp->right == nullptr) {
 					tmp->right = _nallocate(val);
+					tmp->right->parent = tmp;
 					_ins_balance(tmp->right, false);
 					return ft::make_pair(iterator(tmp->right), true);
 				}
 				tmp = tmp->right;
 			}
 		}
+		return (ft::make_pair(iterator(_root), false));
 	}
+	pointer end () const { return _root; }
+	pointer begin () const {
+		if (_head == nullptr)
+			return _root;
+		return node_minimum(_head); 
+	}
+	pointer head () const {return _head; }
 	// 2) Find
-	pointer find(const value_type& key) {
+	pointer find(const key_type& key) const {
 		for ( pointer tmp = _head; tmp != nullptr; ) {
-			if (!_compare(tmp->value, key)) {
-				if (!_compare(key, tmp->value))
+			if (!_compare(tmp->value.first, key)) {
+				if (!_compare(key, tmp->value.first))
 					return tmp;
 				if (tmp->left == nullptr)
 					return nullptr;
@@ -120,10 +133,16 @@ public:
 			return ;
 		_rb_deletion(pos);
 	}
+	size_type erase (const key_type& k) {
+		if (pos == nullptr || pos == _root || find(k) == _root)
+			return 0;
+		_rb_deletion(pos);
+		return 1;
+	}
 	void	clear() {
 		for (pointer tmp = node_minimum(_head); tmp != _root; tmp = successor(tmp)) {
 			try	{
-				_alloc.destroy(tmp->value);
+				_alloc.destroy(&(tmp->value));
 			}
 			catch(...) {
 				remove_tree();
@@ -140,7 +159,7 @@ public:
 		ft::swap(_compare, x._compare);
 	}
 	// 5) Count
-	size_type count (const value_type& k) const {
+	size_type count (const key_type& k) const {
 		if ( find(k) == _root)
 			return 0;
 		return 1;
@@ -148,18 +167,18 @@ public:
 	// 6) lower/upper bound
 		
 	// Min/Max search functions
-	pointer	node_maximum (pointer current) {
+	pointer	node_maximum (pointer current) const {
 		while (current->right != nullptr)
 			current = current->right;
 		return current;
 	}
-	pointer	node_minimum (pointer current) {
-		while (current->left != nullptr)
+	pointer	node_minimum (pointer current) const {
+		while (current && current->left != nullptr)
 			current = current->left;
 		return current;	
 	}
 	// Predecessor/successor functions
-	pointer	successor (pointer current) {
+	pointer	successor (pointer current) const {
 		if (current->right != nullptr) {
 			return node_minimum(current->right);
 		}
@@ -170,7 +189,7 @@ public:
 		}
 		return Par;
 	}
-	pointer	predecessor (pointer current) {
+	pointer	predecessor (pointer current) const {
 		if (current->left != nullptr) {
 			return node_maximum(current->left);
 		}
@@ -233,6 +252,8 @@ private:
 			x.red = true;
 	}
 	void remove_tree() {
+		if (_head == nullptr)
+			return;
 		for (pointer tmp = node_minimum(_head); tmp != _root; tmp = successor(tmp)) {
 			try	{
 				_del_node(tmp);
@@ -268,23 +289,21 @@ private:
 	}
 		// 2) Delete Node
 	void	_del_node (pointer pos) {
-		if (pos->value) {
-			try	{
-				_alloc.destroy(&(pos->value));
-			}
-			catch(...) {
-				_node_alloc.deallocate(pos, 1);
-			}
+		try	{
+			_alloc.destroy(&(pos->value));
+		}
+		catch(...) {
+			_node_alloc.deallocate(pos, 1);
 		}
 		_node_alloc.deallocate(pos, 1);
 	}
 		// 3) Balance Tree after Insertion
 	void	_ins_balance (pointer Kid, bool left_child) {
-		for ( pointer	Uncle = nullptr; Kid != _head && Kid->parent->red == true; ) {
+		for (pointer Uncle = nullptr; Kid != _head && Kid->parent->red == true; ) {
 			if (Kid->parent == Kid->parent->parent->right) {
 				Uncle = Kid->parent->parent->left;
-				if (Uncle->red == true) {
-					balance_case1(Kid, Uncle);
+				if (Uncle && Uncle->red == true) {
+					_ins_balance_case1(Kid, Uncle);
 					Kid = Kid->parent->parent;
 				}
 				else {
@@ -297,7 +316,7 @@ private:
 			}
 			else {
 				Uncle = Kid->parent->parent->right;
-				if (Uncle->red == true) {
+				if (Uncle && Uncle->red == true) {
 					_ins_balance_case1(Kid, Uncle);
 					Kid = Kid->parent->parent;
 				}
@@ -306,18 +325,17 @@ private:
 						Kid = Kid->parent;
 						rotate_left(Kid);
 					}
-					_ins_balance_case3(Kid);
+					_ins_balance_case3(Kid); ///////////////////////////$test
 				}
 			}
 		}
-		_head->red = false;
 	}
 	// 4) Balncing insertion cases
 		 // If Uncle is red colour -> colors to be flipped -> Uncle and Parent become black, Grandparent red
 	void	_ins_balance_case1(pointer Kid, pointer Uncle) {
 		Kid->parent->red = false;
 		Uncle->red = false;
-		if (Kid->parent->parent != _head)
+		if (Kid->parent->parent != _root)
 			Kid->parent->parent->red = true;
 	}
 		 //b) Uncle is black, Parent is right child and kid is right child
@@ -333,94 +351,96 @@ private:
 		rotate_right(Kid->parent->parent);
 	}
 	// 5) Deleting Node from tree
-	void	_rb_deletion(pointer pos) {
-		bool	is_red = pos->red;
-		pointer tmp1 = pos;
-		if (pos->left == nullptr) {
-			pos = pos->right;
-			_del_changenodes(pos, pos->right);
+	void	_rb_deletion(pointer z) {
+		bool	is_red = z->red;
+		pointer x;
+		pointer y = z;
+
+		if (z->left == nullptr) {
+			x = z->right;
+			_del_changenodes(z, z->right);
 		}
-		else if (pos->right == nullptr) {
-			pos = pos->left;
-			_del_changenodes(pos, pos->left);
+		else if (z->right == nullptr) {
+			x = z->left;
+			_del_changenodes(z, z->left);
 		}
 		else {
-			pointer tmp2 = node_minimum(pos->right);
-			pos = tmp2->right;
-			is_red = tmp1->red;
-			if (tmp2->parent == tmp1)
-				pos->parent = tmp2;
+			y = node_minimum(z->right);
+			is_red = y->red;
+			x = y->right;
+			if (y->parent == z)
+				x->parent = y;
 			else {
-				_del_changenodes(tmp2, tmp2->right);
-				tmp2->right = tmp1->right;
-				tmp2->right->parent = tmp2;
+				_del_changenodes(y, y->right);
+				y->right = z->right;
+				y->right->parent = y;
 			}
-			_del_changenodes(tmp1, tmp2);
-			tmp2->left = tmp1->left;
-			tmp2->left->parent = tmp2;
-			tmp2->red = tmp1->red;
+			_del_changenodes(z, y);
+			y->left = z->left;
+			y->left->parent = y;
+			y->red = z->red;
 		}
-		_del_node(tmp1);
+		_del_node(z);
 		if (is_red == false)
-			_del_rebalance(pos);
+			_del_rebalance(x);
 	}
 		 // a) Rebalancing tree after deletion
-	void _del_rebalance(pointer pos) {
-		for (pointer sib = nullptr; pos != _root && pos->red == false;) {
-			if (pos == pos->parent->left) {
-				sib = pos->parent->right;
-				if (sib->red == true) {
-					sib->red = false;
-					pos->parent->red = true;
-					rotate_left(pos->parent);
-					sib = pos->parent->right;
+	void _del_rebalance(pointer x) {
+		for (pointer s = nullptr; x != _root && x->red == false;) {
+			if (x == x->parent->left) {
+				s = x->parent->right;
+				if (s->red == true) {
+					s->red = false;
+					x->parent->red = true;
+					rotate_left(x->parent);
+					s = x->parent->right;
 				}
-				if (sib->left->red == false && sib->right->red == false) {
-					sib->red = true;
-					pos = pos->parent;
+				if (s->left->red == false && s->right->red == false) {
+					s->red = true;
+					x = x->parent;
 				}
 				else {
-					if (sib->right->red == false) {
-						sib->left->red = false;
-						sib->red = true;
-						rotate_right(sib);
-						sib = pos->parent->right;
+					if (s->right->red == false) {
+						s->left->red = false;
+						s->red = true;
+						rotate_right(s);
+						s = x->parent->right;
 					}
-					sib->red = pos->parent->red;
-					pos->parent->red = false;
-					sib->right->red = false;
-					rotate_left(pos->parent);
-					pos = _root;
+					s->red = x->parent->red;
+					s->parent->red = false;
+					s->right->red = false;
+					rotate_left(x->parent);
+					x = _root;
 				}
 			}
 			else {
-				sib = pos->parent->left;
-				if (sib->red == true) {
-					sib->red = false;
-					pos->parent->red = true;
-					rotate_right(pos->parent);
-					sib = pos->parent->left;
+				s = x->parent->left;
+				if (s->red == true) {
+					s->red = false;
+					x->parent->red = true;
+					rotate_right(x->parent);
+					s = x->parent->left;
 				}
-				if (sib->right->red == false && sib->left->red == false) {
-					sib->red = true;
-					pos = pos->parent;
+				if (s->right->red == false && s->left->red == false) {
+					s->red = true;
+					x = x->parent;
 				}
 				else {
-					if (sib->left->red == false) {
-						sib->right->red = false;
-						sib->red = true;
-						rotate_left(sib);
-						sib = pos->parent->left;
+					if (s->left->red == false) {
+						s->right->red = false;
+						s->red = true;
+						rotate_left(s);
+						s = x->parent->left;
 					}
-					sib->red = pos->parent->red;
-					pos->parent->red = false;
-					sib->left->red = false;
-					rotate_right(pos->parent);
-					pos = _root;
+					s->red = x->parent->red;
+					x->parent->red = false;
+					s->left->red = false;
+					rotate_right(x->parent);
+					x = _root;
 				}
 			}
 		}
-		pos->red = false;
+		x->red = false;
 	}
 	// Replaces node 'pos' with a node 'other_pos'
 	void _del_changenodes(pointer pos, pointer other_pos) {

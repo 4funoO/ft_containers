@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:32 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/04 19:12:30 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/05 18:40:14 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,12 @@ public:
 	typedef	typename allocator_type::const_pointer		const_pointer;
 	typedef	typename allocator_type::size_type			size_type;
 	typedef typename allocator_type::difference_type	difference_type;
-	typedef	ft::TreeIterator<value_type>				iterator;
-	typedef	ft::TreeIterator<const value_type>			const_iterator;
-	typedef	ft::reverse_iterator<iterator>				reverse_iterator;
-	typedef	ft::reverse_iterator<const_iterator>		const_reverse_iterator;
+
+	typedef	ft::tree<key_type, value_type, key_compare, allocator_type>	tree;
+	typedef	typename tree::iterator					iterator;
+	typedef	typename tree::const_iterator			const_iterator;
+	typedef	typename tree::reverse_iterator			reverse_iterator;
+	typedef	typename tree::const_reverse_iterator	const_reverse_iterator;
 
 	class value_compare : std::binary_function<value_type, value_type, bool>
 	{
@@ -55,9 +57,9 @@ public:
 	};
 
 private:
-	key_compare														_comp;
-	allocator_type													_alloc;
-	ft::tree<value_type, key_compare, allocator_type>				_tree;
+	key_compare			_comp;
+	allocator_type		_alloc;
+	tree				_tree;
 	
 public:
 // MEMBER FUNCTIONS
@@ -72,7 +74,7 @@ public:
 		insert(first, last);
 	}
 		// 3) Copy
-	map (const map& x) : _alloc(x.get_allocator()), _comp(x.key_comp()), _tree(x.tree) { }
+	map (const map& x) : _comp(x.key_comp()), _alloc(x.get_allocator()), _tree(x._tree) { }
 	// DESTRUCTOR
 	~map () { }
 	// ASSIGN OPERATOR
@@ -80,7 +82,8 @@ public:
 	map& operator= (const map& x) {
 		_alloc = x.get_allocator();
 		_comp = x.key_comp();
-		_tree = x.tree;
+		_tree = x._tree;
+		return *this;
 	}
 	// ALLOCATOR GETTER -> Returns allocator
 	allocator_type get_allocator() const { return _alloc; }
@@ -90,56 +93,56 @@ public:
 	mapped_type& at (const key_type& k) {
 		Node<value_type>* tmp = _tree.find(k);
 		if (tmp == nullptr)
-			throw std::out_of_range("ft::map");
-		return (tmp->value->second);
+			throw std::out_of_range("ft::map::at");
+		return (tmp->value.second);
 	}
 	const mapped_type& at (const key_type& k) const {
 		Node<value_type>* tmp = _tree.find(k);
 		if (tmp == nullptr)
-			throw std::out_of_range("ft::map");
-		return (tmp->value->second);
+			throw std::out_of_range("ft::map::at");
+		return (tmp->value.second);
 	}
 	// [] -> access or insert specified element
 	mapped_type& operator[] (const key_type& key) {
-		return insert(ft::make_pair(key, T())).first->second;
+		return (insert(ft::make_pair(key, T())).first)->second;
 	}
 // ITERATORS
 	// 1) begin -> returns an iterator to the beginning
 	iterator begin() {
-		return iterator(_tree.node_minimum(_tree._head));
+		return iterator(_tree.begin());
 	}
 	const_iterator begin() const {
-		return const_iterator(_tree.node_minimum(_tree._head));
+		return const_iterator(_tree.begin());
 	}
 	iterator end() {
-		return iterator(_tree._root);
+		return iterator(_tree.end());
 	}
 	const_iterator end() const {
-		return const_iterator(_tree._root);
+		return const_iterator(_tree.end());
 	}
 	reverse_iterator rbegin() {
-		return reverse_iterator(_tree._root);
+		return reverse_iterator(_tree.end());
 	}
 	const_reverse_iterator rbegin() const {
-		return const_reverse_iterator(_tree._root);
+		return const_reverse_iterator(_tree.end());
 	}
 	reverse_iterator rend() {
-		return reverse_iterator(_tree.node_minimum(_tree._head));
+		return reverse_iterator(_tree.begin());
 	}
 	const_reverse_iterator rend() const {
-		return const_reverse_iterator(_tree.node_minimum(_tree._head));
+		return const_reverse_iterator(_tree.begin());
 	}
 // CAPACITY
 	// 1) empty -> checks whether the container is empty
 	bool empty() const {
-		if (_tree._head == nullptr)
+		if (_tree.head() == nullptr)
 			return true;
 		return false;
 	}
 	// 2) size -> Return container size
-	size_type size() const { _tree.size(); }
+	size_type size() const { return _tree.size(); }
 	// 3) maxsize -> Return container maximum size possible on current architecture
-	size_type maxsize() const { _tree.maxsize(); }
+	size_type max_size() const { return _tree.max_size(); }
 // MODIFIERS
 	// 1) Removes all elements from the map
 	void clear() { _tree.clear(); }
@@ -149,7 +152,7 @@ public:
 		// b) With hint 
 	iterator insert (iterator position, const value_type& val) {
 		(void)position;
-		return _tree.insert(val)->first;
+		return _tree.insert(val).first;
 	}
 		// c) Range
 	template <class InputIterator>
@@ -159,9 +162,9 @@ public:
 	}
 	// 3) Erase -> Removes from container elements
 		// a) Removes element in given position
-	void erase (iterator position) { _tree.erase(&(*position)); }
+	void erase (iterator position) { _tree.erase(position.base()); }
 		// b) Removes element with given key
-	size_type erase (const key_type& k) { _tree.erase(_tree.find(k)); }
+	size_type erase (const key_type& k) { return _tree.erase(k); }
 		// c) Removes elemets in given range
 	void erase (iterator first, iterator last) {
 		for ( ; first != last; first++)

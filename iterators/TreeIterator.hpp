@@ -10,18 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   TreeIterator.hpp                                 :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/10/25 13:51:15 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/28 17:33:01 by doreshev         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef TREEITERATOR_HPP
 # define TREEITERATOR_HPP
 
@@ -39,11 +27,11 @@ namespace ft {
 		bool		red;
 	};
 	//MAP ITERATORS
-	template <class T>
+	template <class T, class TNode>
 	class TreeIterator {
 	public:
 		typedef T															value_type;
-		typedef	Node<T>														node_type;
+		typedef	TNode														node_type;
     	typedef node_type*													pointer;
 		typedef node_type&													reference;
     	typedef const node_type&											const_reference;
@@ -55,7 +43,7 @@ namespace ft {
 		// 1) Default
 		TreeIterator() : _ptr() { }
 		// 2) Initialization
-		TreeIterator(const_reference ptr) : _ptr(ptr) { }
+		TreeIterator(pointer ptr) : _ptr(ptr) { }
 		// 3) Copy
 		TreeIterator ( const TreeIterator& x ) { _ptr = x.base(); }
 	// ASSIGN OPERATOR
@@ -68,19 +56,26 @@ namespace ft {
 		~TreeIterator() { }
 	// MEMBER FUNCTIONS
 		// Base - returns base iterator
-		pointer	base() const {
+		pointer	base() {
+			return _ptr;
+		}
+		const pointer	base() const {
 			return _ptr;
 		}
 		// Pre-increment iterator position
 		TreeIterator&	operator++() {
-			if (_ptr->right != nullptr) {
-				_ptr = _ptr->right;
-				while (_ptr->left != nullptr)
-					_ptr = _ptr->left;
-				return *this;
+			if (_ptr != nullptr) {
+				if (_ptr->right != nullptr) {
+					_ptr = _ptr->right;
+					while (_ptr->left != nullptr)
+						_ptr = _ptr->left;
+					return *this;
+				}
+				pointer tmp = _ptr->parent;
+				for (; tmp != nullptr && _ptr == tmp->right; _ptr = tmp) 
+					tmp = tmp->parent;
+				_ptr = tmp;
 			}
-			for (pointer tmp = _ptr, _ptr = _ptr->parent; _ptr != nullptr && tmp == _ptr->right; tmp = _ptr) 
-				_ptr = _ptr->parent;
 			return *this;
 		}
 		// Post-increment iterator position
@@ -90,29 +85,33 @@ namespace ft {
 			return temp;
 		}
 		// Dereference iterator
-		reference	operator*() const {
+		value_type&	operator*() const {
 			return _ptr->value;
 		}
-		reference	operator*() {
+		value_type&	operator*() {
 			return _ptr->value;
 		}
 		// Dereference iterator
-		pointer operator->() const {
+		value_type* operator->() const {
 			return &(_ptr->value);
 		}
-		pointer operator->() {
+		value_type* operator->() {
 			return &(_ptr->value);
 		}
 		// Pre-decrement iterator position
 		TreeIterator&	operator--() {
-			if (_ptr->left != nullptr) {
-				_ptr = _ptr->left;
-				while (_ptr->right != nullptr)
-					_ptr = _ptr->right;
-				return *this;
+			if (_ptr != nullptr) {
+				if (_ptr->left != nullptr) {
+					_ptr = _ptr->left;
+					while (_ptr->right != nullptr)
+						_ptr = _ptr->right;
+					return *this;
+				}
+				pointer tmp = _ptr->parent;
+				for (; tmp != nullptr && _ptr == tmp->left; _ptr = tmp)
+					tmp = tmp->parent;
+				_ptr = tmp;
 			}
-			for (pointer tmp = _ptr, _ptr = _ptr->parent; _ptr != nullptr && tmp == _ptr->left; tmp = _ptr)
-				_ptr = _ptr->parent;
 			return *this;
 		}
 		// Post-decrement iterator position
@@ -135,25 +134,31 @@ namespace ft {
 				temp--;
 			return temp;
 		}
+		bool operator==(const TreeIterator& x) const {
+			return _ptr == x._ptr;
+		}
+		bool operator!=(const TreeIterator& x) const {
+			return !(_ptr == x._ptr);
+		}
 	protected:
 		pointer		_ptr;
 	};
 
 	//RELATIONAL OPERATORS 
-	template <class T>
-	bool operator==(const TreeIterator<T>& lhs, const TreeIterator<T>& rhs) {
+	template <class T, class T2>
+	bool operator==(const TreeIterator<T, T2>& lhs, const TreeIterator<T, T2>& rhs) {
 		return lhs.base() == rhs.base();
 	}
-	template <class T, class T1>
-	bool operator==(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
+	template <class T, class T1, class T2, class T12>
+	bool operator==(const TreeIterator<T, T2>& lhs, const TreeIterator<T1, T12>& rhs) {
 		return lhs.base() == rhs.base();
 	}
-	template <class T>
-	bool operator!=(const TreeIterator<T>& lhs, const TreeIterator<T>& rhs) {
+	template <class T, class T2>
+	bool operator!=(const TreeIterator<T, T2>& lhs, const TreeIterator<T, T2>& rhs) {
 		return lhs.base() != rhs.base();
 	}
-	template <class T, class T1>
-	bool operator!=(const TreeIterator<T>& lhs, const TreeIterator<T1>& rhs) {
+	template <class T, class T1, class T2, class T12>
+	bool operator!=(const TreeIterator<T, T2>& lhs, const TreeIterator<T1, T12>& rhs) {
 		return lhs.base() != rhs.base();
 	}
 }
