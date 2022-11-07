@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/05 18:42:21 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/07 15:55:09 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ public:
 	typedef typename Allocator::template rebind<Node<T> >::other				node_allocator;
 	typedef typename allocator_type::size_type									size_type;
 	typedef typename ft::TreeIterator<value_type, node_type> 					iterator;
-	typedef typename ft::TreeIterator<const value_type, const Node<T> >			const_iterator;
+	typedef typename ft::TreeIterator<const value_type, const node_type>		const_iterator;
 	typedef typename ft::reverse_iterator<iterator>								reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
@@ -84,8 +84,9 @@ public:
 				if (tmp->left == nullptr) {
 					tmp->left = _nallocate(val);
 					tmp->left->parent = tmp;
-					_ins_balance(tmp->left, true);
-					return ft::make_pair(iterator(tmp->left), true);
+					tmp = tmp->left;
+					_ins_balance(tmp);
+					return ft::make_pair(iterator(tmp), true);
 				}
 				tmp = tmp->left;
 			}
@@ -93,8 +94,9 @@ public:
 				if (tmp->right == nullptr) {
 					tmp->right = _nallocate(val);
 					tmp->right->parent = tmp;
-					_ins_balance(tmp->right, false);
-					return ft::make_pair(iterator(tmp->right), true);
+					tmp = tmp->right;
+					_ins_balance(tmp);
+					return ft::make_pair(iterator(tmp), true);
 				}
 				tmp = tmp->right;
 			}
@@ -134,7 +136,8 @@ public:
 		_rb_deletion(pos);
 	}
 	size_type erase (const key_type& k) {
-		if (pos == nullptr || pos == _root || find(k) == _root)
+		pointer pos = find(k);
+		if (pos == nullptr)
 			return 0;
 		_rb_deletion(pos);
 		return 1;
@@ -168,12 +171,16 @@ public:
 		
 	// Min/Max search functions
 	pointer	node_maximum (pointer current) const {
+		if (current == nullptr)
+			return current;
 		while (current->right != nullptr)
 			current = current->right;
 		return current;
 	}
 	pointer	node_minimum (pointer current) const {
-		while (current && current->left != nullptr)
+		if (current == nullptr)
+			return current;
+		while (current->left != nullptr)
 			current = current->left;
 		return current;	
 	}
@@ -212,14 +219,16 @@ private:
 				y->left->parent = x;
 			y->left = x;
 			y->parent = x->parent;
-			if (x->parent) {
+			if (x->parent != _root) {
 				if (x->parent->left == x)
 					x->parent->left = y;
 				else
 					x->parent->right = y;
 			}
-			else
+			else {
 				_head = y;
+				_root->left = _head;
+			}
 			x->parent = y;
 		}
 	}
@@ -233,14 +242,16 @@ private:
 				y->right->parent = x;
 			y->right = x;
 			y->parent = x->parent;
-			if (x->parent) {
+			if (x->parent != _root) {
 				if (x->parent->left == x)
 					x->parent->left = y;
 				else
 					x->parent->right = y;
 			}
-			else
+			else {
 				_head = y;
+				_root->left = _head;
+			}
 			x->parent = y;
 		}
 	}
@@ -298,45 +309,43 @@ private:
 		_node_alloc.deallocate(pos, 1);
 	}
 		// 3) Balance Tree after Insertion
-	void	_ins_balance (pointer Kid, bool left_child) {
+	void	_ins_balance (pointer Kid) {
 		for (pointer Uncle = nullptr; Kid != _head && Kid->parent->red == true; ) {
-			if (Kid->parent == Kid->parent->parent->right) {
-				Uncle = Kid->parent->parent->left;
-				if (Uncle && Uncle->red == true) {
-					_ins_balance_case1(Kid, Uncle);
-					Kid = Kid->parent->parent;
-				}
+			if (Kid->parent == Kid->parent->parent->left) {
+				Uncle = Kid->parent->parent->right;
+				if (Uncle && Uncle->red == true)
+					Kid = _ins_balance_case1(Kid, Uncle);	
 				else {
-					if (left_child == true) {
+					if (Kid == Kid->parent->right) {
+						Kid = Kid->parent;
+						rotate_left(Kid);
+					}
+					_ins_balance_case3(Kid);
+				}				
+			}
+			else {
+				Uncle = Kid->parent->parent->left;
+				if (Uncle && Uncle->red == true)
+					Kid = _ins_balance_case1(Kid, Uncle);
+				else {
+					if (Kid == Kid->parent->left) {
 						Kid = Kid->parent;
 						rotate_right(Kid);
 					}
 					_ins_balance_case2(Kid);
 				}
 			}
-			else {
-				Uncle = Kid->parent->parent->right;
-				if (Uncle && Uncle->red == true) {
-					_ins_balance_case1(Kid, Uncle);
-					Kid = Kid->parent->parent;
-				}
-				else {
-					if (left_child == false) {
-						Kid = Kid->parent;
-						rotate_left(Kid);
-					}
-					_ins_balance_case3(Kid); ///////////////////////////$test
-				}
-			}
 		}
+		_head->red = false;
 	}
 	// 4) Balncing insertion cases
 		 // If Uncle is red colour -> colors to be flipped -> Uncle and Parent become black, Grandparent red
-	void	_ins_balance_case1(pointer Kid, pointer Uncle) {
+	pointer	_ins_balance_case1(pointer Kid, pointer Uncle) {
 		Kid->parent->red = false;
 		Uncle->red = false;
 		if (Kid->parent->parent != _root)
 			Kid->parent->parent->red = true;
+		return Kid->parent->parent;
 	}
 		 //b) Uncle is black, Parent is right child and kid is right child
 	void	_ins_balance_case2(pointer Kid) {

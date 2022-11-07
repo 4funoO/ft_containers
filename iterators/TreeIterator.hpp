@@ -44,6 +44,7 @@ namespace ft {
 		TreeIterator() : _ptr() { }
 		// 2) Initialization
 		TreeIterator(pointer ptr) : _ptr(ptr) { }
+		TreeIterator(const_reference ptr) : _ptr(&ptr) { }
 		// 3) Copy
 		TreeIterator ( const TreeIterator& x ) { _ptr = x.base(); }
 	// ASSIGN OPERATOR
@@ -56,26 +57,23 @@ namespace ft {
 		~TreeIterator() { }
 	// MEMBER FUNCTIONS
 		// Base - returns base iterator
-		pointer	base() {
-			return _ptr;
-		}
-		const pointer	base() const {
+		pointer	base() const {
 			return _ptr;
 		}
 		// Pre-increment iterator position
 		TreeIterator&	operator++() {
-			if (_ptr != nullptr) {
-				if (_ptr->right != nullptr) {
-					_ptr = _ptr->right;
-					while (_ptr->left != nullptr)
-						_ptr = _ptr->left;
-					return *this;
-				}
-				pointer tmp = _ptr->parent;
-				for (; tmp != nullptr && _ptr == tmp->right; _ptr = tmp) 
-					tmp = tmp->parent;
-				_ptr = tmp;
+			if (_ptr->right != nullptr) {
+				_ptr = _ptr->right;
+				while (_ptr->left != nullptr)
+					_ptr = _ptr->left;
+				return *this;
 			}
+			pointer par = _ptr->parent;
+			while (par->parent != nullptr && _ptr == par->right) {
+				_ptr = par;
+				par = par->parent;
+			}
+			_ptr = par;
 			return *this;
 		}
 		// Post-increment iterator position
@@ -100,18 +98,18 @@ namespace ft {
 		}
 		// Pre-decrement iterator position
 		TreeIterator&	operator--() {
-			if (_ptr != nullptr) {
-				if (_ptr->left != nullptr) {
-					_ptr = _ptr->left;
-					while (_ptr->right != nullptr)
-						_ptr = _ptr->right;
-					return *this;
-				}
-				pointer tmp = _ptr->parent;
-				for (; tmp != nullptr && _ptr == tmp->left; _ptr = tmp)
-					tmp = tmp->parent;
-				_ptr = tmp;
+			if (_ptr->left != nullptr) {
+				_ptr = _ptr->left;
+				while (_ptr->right != nullptr)
+					_ptr = _ptr->right;
+				return *this;
 			}
+			pointer par = _ptr->parent;
+			while (par->parent != nullptr && _ptr == par->left) {
+				_ptr = par;
+				par = par->parent;
+			}
+			_ptr = par;
 			return *this;
 		}
 		// Post-decrement iterator position
