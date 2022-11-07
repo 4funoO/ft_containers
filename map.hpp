@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:32 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/05 18:40:14 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/07 15:43:40 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,30 +14,29 @@
 # define MAP_HPP
 
 # include <stdexcept>
-# include "type_traits.hpp"
 # include "iterators/tree.hpp"
 
 namespace ft {
 template<class Key, class T, class Compare = std::less<Key>, class Allocator = std::allocator<ft::pair<const Key, T> > >
 class map {
 public:
-	typedef	Key											key_type;
-	typedef	T											mapped_type;
-	typedef	Compare										key_compare;
-	typedef	typename ft::pair<const Key, T>				value_type;
-	typedef	Allocator									allocator_type;
-	typedef	typename allocator_type::reference			reference;
-	typedef	typename allocator_type::const_reference	const_reference;
-	typedef	typename allocator_type::pointer			pointer;
-	typedef	typename allocator_type::const_pointer		const_pointer;
-	typedef	typename allocator_type::size_type			size_type;
-	typedef typename allocator_type::difference_type	difference_type;
+	typedef	Key															key_type;
+	typedef	T															mapped_type;
+	typedef	Compare														key_compare;
+	typedef	typename ft::pair<const Key, T>								value_type;
+	typedef	Allocator													allocator_type;
+	typedef	typename allocator_type::reference							reference;
+	typedef	typename allocator_type::const_reference					const_reference;
+	typedef	typename allocator_type::pointer							pointer;
+	typedef	typename allocator_type::const_pointer						const_pointer;
+	typedef	typename allocator_type::size_type							size_type;
+	typedef typename allocator_type::difference_type					difference_type;
 
 	typedef	ft::tree<key_type, value_type, key_compare, allocator_type>	tree;
-	typedef	typename tree::iterator					iterator;
-	typedef	typename tree::const_iterator			const_iterator;
-	typedef	typename tree::reverse_iterator			reverse_iterator;
-	typedef	typename tree::const_reverse_iterator	const_reverse_iterator;
+	typedef	typename tree::iterator										iterator;
+	typedef	typename tree::const_iterator								const_iterator;
+	typedef	typename tree::reverse_iterator								reverse_iterator;
+	typedef	typename tree::const_reverse_iterator						const_reverse_iterator;
 
 	class value_compare : std::binary_function<value_type, value_type, bool>
 	{
@@ -109,7 +108,7 @@ public:
 // ITERATORS
 	// 1) begin -> returns an iterator to the beginning
 	iterator begin() {
-		return iterator(_tree.begin());
+		return _tree.begin();
 	}
 	const_iterator begin() const {
 		return const_iterator(_tree.begin());
@@ -216,6 +215,7 @@ public:
 // OBSERVERS
 	// Returns the function that compares keys
 	key_compare key_comp() const { return _comp; }
+	value_compare value_comp() const { return value_compare(_comp); }
 };
 
 // RELATIONAL OPERATORS MAP
