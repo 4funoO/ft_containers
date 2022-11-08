@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/07 15:55:09 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/08 18:31:39 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,14 +24,14 @@ class tree {
 public:
 	typedef T																	value_type;
 	typedef Key																	key_type;
-	typedef Node<T>																node_type;
+	typedef Node<value_type>													node_type;
 	typedef node_type*															pointer;
 	typedef Compare																value_compare;
 	typedef Allocator															allocator_type;
 	typedef typename Allocator::template rebind<Node<T> >::other				node_allocator;
 	typedef typename allocator_type::size_type									size_type;
-	typedef typename ft::TreeIterator<value_type, node_type> 					iterator;
-	typedef typename ft::TreeIterator<const value_type, const node_type>		const_iterator;
+	typedef typename ft::TreeIterator<value_type, node_type*, tree> 			iterator;
+	typedef typename ft::TreeIterator<const value_type, const node_type*, tree>	const_iterator;
 	typedef typename ft::reverse_iterator<iterator>								reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
@@ -103,13 +103,25 @@ public:
 		}
 		return (ft::make_pair(iterator(_root), false));
 	}
-	pointer end () const { return _root; }
-	pointer begin () const {
+	iterator begin () {
 		if (_head == nullptr)
-			return _root;
-		return node_minimum(_head); 
+			return iterator(_root);
+		return iterator(node_minimum(_head)); 
 	}
-	pointer head () const {return _head; }
+	const_iterator begin () const {
+		if (_head == nullptr)
+			return const_iterator(_root);
+		return const_iterator(node_minimum(_head)); 
+	}
+	iterator end () { return iterator(_root); }
+	const_iterator end () const { return const_iterator(_root);	}
+	// Checks if tree is empty
+	bool empty () const {
+		if (_head == nullptr)
+			return true;
+		return false;
+	}
+	
 	// 2) Find
 	pointer find(const key_type& key) const {
 		for ( pointer tmp = _head; tmp != nullptr; ) {
@@ -168,7 +180,27 @@ public:
 		return 1;
 	}
 	// 6) lower/upper bound
-		
+	iterator lower_bound (const key_type& k) {
+		iterator it = begin();
+		for (iterator last = end(); it != last && !_compare((*it).first, k) && !_compare(k, (*it).first); it++);
+		return it;
+	}
+	const_iterator lower_bound (const key_type& k) const {
+		const_iterator it = begin();
+		for (const_iterator last = end(); it != last && !_compare((*it).first, k) && !_compare(k, (*it).first); it++);
+		return it;
+	}
+	// 5) Return iterator to upper bound
+	iterator upper_bound (const key_type& k) {
+		iterator it = end();
+		for (iterator first = begin(); it != first && !_compare((*it).first, k) && !_compare(k, (*it).first); it--);
+		return it;
+	}
+	const_iterator upper_bound (const key_type& k) const {
+		const_iterator it = end();
+		for (const_iterator first = begin(); it != first && !_compare((*it).first, k) && !_compare(k, (*it).first); it--);
+		return it;
+	}
 	// Min/Max search functions
 	pointer	node_maximum (pointer current) const {
 		if (current == nullptr)
@@ -377,8 +409,9 @@ private:
 			y = node_minimum(z->right);
 			is_red = y->red;
 			x = y->right;
-			if (y->parent == z)
+			if (y->parent == z) {
 				x->parent = y;
+			}
 			else {
 				_del_changenodes(y, y->right);
 				y->right = z->right;
@@ -390,12 +423,12 @@ private:
 			y->red = z->red;
 		}
 		_del_node(z);
-		if (is_red == false)
+		if (x && is_red == false)
 			_del_rebalance(x);
 	}
 		 // a) Rebalancing tree after deletion
 	void _del_rebalance(pointer x) {
-		for (pointer s = nullptr; x != _root && x->red == false;) {
+		for (pointer s = nullptr; x != _head && x->red == false;) {
 			if (x == x->parent->left) {
 				s = x->parent->right;
 				if (s->red == true) {
@@ -404,7 +437,7 @@ private:
 					rotate_left(x->parent);
 					s = x->parent->right;
 				}
-				if (s->left->red == false && s->right->red == false) {
+				if ((s->left == nullptr || s->left->red == false) && (s->right == nullptr || s->right->red == false)) {
 					s->red = true;
 					x = x->parent;
 				}
@@ -419,7 +452,7 @@ private:
 					s->parent->red = false;
 					s->right->red = false;
 					rotate_left(x->parent);
-					x = _root;
+					x = _head;
 				}
 			}
 			else {
@@ -430,7 +463,7 @@ private:
 					rotate_right(x->parent);
 					s = x->parent->left;
 				}
-				if (s->right->red == false && s->left->red == false) {
+				if ((s->left == nullptr || s->left->red == false) && (s->right == nullptr || s->right->red == false)) {
 					s->red = true;
 					x = x->parent;
 				}
@@ -445,7 +478,7 @@ private:
 					x->parent->red = false;
 					s->left->red = false;
 					rotate_right(x->parent);
-					x = _root;
+					x = _head;
 				}
 			}
 		}
@@ -458,8 +491,9 @@ private:
 		else if (pos == pos->parent->left)
 			pos->parent->left = other_pos;
 		else
-			pos->right->parent = other_pos;
-		other_pos->parent = pos->parent;
+			pos->parent->right = other_pos;
+		if (other_pos)
+			other_pos->parent = pos->parent;
 	}
 };
 }

@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:32 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/07 15:43:40 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/08 15:27:06 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ public:
 	explicit map (const key_compare& comp = key_compare(), const allocator_type& alloc = allocator_type())
 				: _comp(comp), _alloc(alloc), _tree() { }
 		// 2) Range
-	template <class InputIterator> 
+	template <class InputIterator>
 	map (InputIterator first, InputIterator last, const key_compare& comp = key_compare(),
 		const allocator_type& alloc = allocator_type()) : _comp(comp), _alloc(alloc), _tree() {
 		insert(first, last);
@@ -111,13 +111,13 @@ public:
 		return _tree.begin();
 	}
 	const_iterator begin() const {
-		return const_iterator(_tree.begin());
+		return _tree.begin();
 	}
 	iterator end() {
-		return iterator(_tree.end());
+		return _tree.end();
 	}
 	const_iterator end() const {
-		return const_iterator(_tree.end());
+		return _tree.end();
 	}
 	reverse_iterator rbegin() {
 		return reverse_iterator(_tree.end());
@@ -133,11 +133,7 @@ public:
 	}
 // CAPACITY
 	// 1) empty -> checks whether the container is empty
-	bool empty() const {
-		if (_tree.head() == nullptr)
-			return true;
-		return false;
-	}
+	bool empty() const { return _tree.empty(); }
 	// 2) size -> Return container size
 	size_type size() const { return _tree.size(); }
 	// 3) maxsize -> Return container maximum size possible on current architecture
@@ -171,9 +167,7 @@ public:
 	}
 	// 4) Swap -> Exchanges the content of the container by the content of x
 	void swap (map& x) {
-		ft::swap(_comp, x.key_comp());
-		ft::swap(_alloc, x.get_allocator());
-		_tree->swap(x._tree);
+		_tree.swap(x._tree);
 	}
 // LOOKUP (Operations)
 	// 1) Count -> Count elements with a specific key
@@ -191,27 +185,11 @@ public:
 		return ft::make_pair(lower_bound(k), upper_bound(k));
 	}
 	// 4) Return iterator to lower bound
-	iterator lower_bound (const key_type& k) {
-		iterator it = begin();
-		for (iterator last = end(); it != last && !_comp(*it, k) && !_comp(k, *it); it++);
-		return it;
-	}
-	const_iterator lower_bound (const key_type& k) const {
-		const_iterator it = begin();
-		for (const_iterator last = end(); it != last && !_comp(*it, k) && !_comp(k, *it); it++);
-		return it;
-	}
+	iterator lower_bound (const key_type& k) { return _tree.lower_bound(k); }
+	const_iterator lower_bound (const key_type& k) const { return _tree.lower_bound(k); }
 	// 5) Return iterator to upper bound
-	iterator upper_bound (const key_type& k) {
-		iterator it = end();
-		for (iterator first = begin(); it != first && !_comp(*it, k) && !_comp(k, *it); it--);
-		return it;
-	}
-	const_iterator upper_bound (const key_type& k) const {
-		const_iterator it = end();
-		for (const_iterator first = begin(); it != first && !_comp(*it, k) && !_comp(k, *it); it--);
-		return it;
-	}
+	iterator upper_bound (const key_type& k) { return _tree.upper_bound(k); }
+	const_iterator upper_bound (const key_type& k) const { return _tree.upper_bound(k); }
 // OBSERVERS
 	// Returns the function that compares keys
 	key_compare key_comp() const { return _comp; }
