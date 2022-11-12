@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/08 18:31:39 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/12 18:08:55 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -400,30 +400,66 @@ private:
 		if (z->left == nullptr) {
 			x = z->right;
 			_del_changenodes(z, z->right);
+			if (!x) {
+				if (z->parent->right)
+					z->parent->right->red = true;
+				x = z->parent;
+			}
 		}
 		else if (z->right == nullptr) {
 			x = z->left;
 			_del_changenodes(z, z->left);
+			if (!x) {
+				if (z->parent->left)
+					z->parent->right->red = true;
+				x = z->parent;
+			}
 		}
 		else {
-			y = node_minimum(z->right);
+			// y = node_minimum(z->right);
+			// is_red = y->red;
+			// x = y->right;
+			// if (!x) {
+			// 	x = y;
+			// 	if (x->left)
+			// 		x->left->red = true;
+			// }
+			// else if (y->parent == z) {
+			// 	x->parent = y;
+			// }
+			// else {
+			// 	_del_changenodes(y, y->right);
+			// 	y->right = z->right;
+			// 	y->right->parent = y;
+			// }
+			// _del_changenodes(z, y);
+			// y->left = z->left;
+			// y->left->parent = y;
+			// y->red = z->red;
+			y = node_maximum(z->left);
 			is_red = y->red;
-			x = y->right;
-			if (y->parent == z) {
+			x = y->left;
+			if (!x) {
+				if (y->parent->right)
+					y->parent->right->red = true;
+				x = y;
+			}
+			else if (y->parent == z) {
 				x->parent = y;
 			}
 			else {
-				_del_changenodes(y, y->right);
-				y->right = z->right;
-				y->right->parent = y;
+				_del_changenodes(y, y->left);
+				y->left = z->left;
+				y->left->parent = y;
 			}
 			_del_changenodes(z, y);
-			y->left = z->left;
-			y->left->parent = y;
+			y->right = z->right;
+			y->right->parent = y;
 			y->red = z->red;
 		}
+		
 		_del_node(z);
-		if (x && is_red == false)
+		if (is_red == false)
 			_del_rebalance(x);
 	}
 		 // a) Rebalancing tree after deletion
@@ -486,8 +522,10 @@ private:
 	}
 	// Replaces node 'pos' with a node 'other_pos'
 	void _del_changenodes(pointer pos, pointer other_pos) {
-		if (pos->parent == _root)
+		if (pos->parent == _root) {
 			_head = pos;
+			_root->left = _head;
+		}
 		else if (pos == pos->parent->left)
 			pos->parent->left = other_pos;
 		else
@@ -496,6 +534,7 @@ private:
 			other_pos->parent = pos->parent;
 	}
 };
+
 }
 
 #endif
