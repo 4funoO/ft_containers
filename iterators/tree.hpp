@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/12 18:08:55 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/12 19:27:28 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -411,31 +411,11 @@ private:
 			_del_changenodes(z, z->left);
 			if (!x) {
 				if (z->parent->left)
-					z->parent->right->red = true;
+					z->parent->left->red = true;
 				x = z->parent;
 			}
 		}
 		else {
-			// y = node_minimum(z->right);
-			// is_red = y->red;
-			// x = y->right;
-			// if (!x) {
-			// 	x = y;
-			// 	if (x->left)
-			// 		x->left->red = true;
-			// }
-			// else if (y->parent == z) {
-			// 	x->parent = y;
-			// }
-			// else {
-			// 	_del_changenodes(y, y->right);
-			// 	y->right = z->right;
-			// 	y->right->parent = y;
-			// }
-			// _del_changenodes(z, y);
-			// y->left = z->left;
-			// y->left->parent = y;
-			// y->red = z->red;
 			y = node_maximum(z->left);
 			is_red = y->red;
 			x = y->left;
