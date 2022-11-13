@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 16:34:43 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/13 17:19:16 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,42 +217,42 @@ public:
 		iterator it = begin();
 		iterator last = end();
 		while (it != last) {
-			if (!_compare((*it).first, k) && !_compare(k, (*it).first))
+			if (!_compare((*it).first, k))
 				return it;
 			it++;
 		}
-		return it.base();
+		return it;
 	}
 	const_iterator lower_bound (const key_type& k) const {
 		const_iterator it = begin();
 		const_iterator last = end();
 		while (it != last) {
-			if (!_compare((*it).first, k) && !_compare(k, (*it).first))
-				return it.base();
+			if (!_compare((*it).first, k))
+				return it;
 			it++;
 		}
-		return it.base();
+		return it;
 	}
 	// 5) Return iterator to upper bound
 	iterator upper_bound (const key_type& k) {
-		iterator it = begin();
-		iterator last = end();
-		while (it != last) {
-			if (!_compare((*last).first, k) && !_compare(k, (*last).first))
-				return last.base();
-			last--;
+		iterator it = end();
+		iterator first = begin();
+		while (it != first) {
+			if (_compare((*it).first, k))
+				return it;
+			it--;
 		}
-		return last.base();
+		return it;
 	}
 	const_iterator upper_bound (const key_type& k) const {
 		const_iterator it = end();
-		const_iterator last = end();
-		while (it != last) {
-			if (!_compare((*last).first, k) && !_compare(k, (*last).first))
-				return last.base();
-			last--;
+		const_iterator first = begin();
+		while (it != first) {
+			if (_compare((*it).first, k))
+				return it;
+			it--;
 		}
-		return last.base();
+		return it;
 	}
 	// Min/Max search functions
 	pointer	node_maximum (pointer current) const {
