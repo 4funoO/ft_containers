@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 15:31:34 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/13 16:34:43 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,10 +204,11 @@ public:
 		ft::swap(_node_alloc, x._node_alloc);
 		ft::swap(_alloc, x._alloc);
 		ft::swap(_compare, x._compare);
+		ft::swap(_size, x._size);
 	}
 	// 5) Count
 	size_type count (const key_type& k) const {
-		if ( find(k) == _root)
+		if (find(k) == nullptr)
 			return 0;
 		return 1;
 	}
@@ -220,17 +221,17 @@ public:
 				return it;
 			it++;
 		}
-		return it;
+		return it.base();
 	}
 	const_iterator lower_bound (const key_type& k) const {
 		const_iterator it = begin();
 		const_iterator last = end();
 		while (it != last) {
 			if (!_compare((*it).first, k) && !_compare(k, (*it).first))
-				return it;
+				return it.base();
 			it++;
 		}
-		return it;
+		return it.base();
 	}
 	// 5) Return iterator to upper bound
 	iterator upper_bound (const key_type& k) {
@@ -238,20 +239,20 @@ public:
 		iterator last = end();
 		while (it != last) {
 			if (!_compare((*last).first, k) && !_compare(k, (*last).first))
-				return last;
+				return last.base();
 			last--;
 		}
-		return last;
+		return last.base();
 	}
 	const_iterator upper_bound (const key_type& k) const {
 		const_iterator it = end();
 		const_iterator last = end();
 		while (it != last) {
 			if (!_compare((*last).first, k) && !_compare(k, (*last).first))
-				return last;
+				return last.base();
 			last--;
 		}
-		return last;
+		return last.base();
 	}
 	// Min/Max search functions
 	pointer	node_maximum (pointer current) const {
