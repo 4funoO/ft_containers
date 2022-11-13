@@ -79,7 +79,7 @@ namespace ft {
 		// Post-increment iterator position
 		TreeIterator	operator++(int) {
 			TreeIterator temp = *this;
-			++_ptr;
+			++(*this);
 			return temp;
 		}
 		// Dereference iterator
@@ -115,7 +115,7 @@ namespace ft {
 		// Post-decrement iterator position
 		TreeIterator	operator--(int) {
 			TreeIterator temp = *this;
-			--_ptr;
+			--(*this);
 			return temp;
 		}
 		// Addition operator

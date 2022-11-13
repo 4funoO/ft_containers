@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:32 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/08 15:27:06 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/13 15:09:03 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,7 @@ public:
 		// c) Range
 	template <class InputIterator>
 	void insert (InputIterator first, InputIterator last) {
-		for ( ; first != last; first++)
+		for (; first != last; first++)
 			insert(*first);
 	}
 	// 3) Erase -> Removes from container elements
@@ -162,8 +162,8 @@ public:
 	size_type erase (const key_type& k) { return _tree.erase(k); }
 		// c) Removes elemets in given range
 	void erase (iterator first, iterator last) {
-		for ( ; first != last; first++)
-			erase(first);
+		while (first != last)
+			erase(first++);
 	}
 	// 4) Swap -> Exchanges the content of the container by the content of x
 	void swap (map& x) {
@@ -175,8 +175,8 @@ public:
 		return _tree.count(k);
 	}
 	// 2) Find -> finds element with specific key
-	iterator find (const key_type& k) { return iterator(_tree.find(k)); }
-	const_iterator find (const key_type& k) const { return const_iterator(_tree.find(k)); }
+	iterator find (const key_type& k) { return iterator(_tree.iter_find(k)); }
+	const_iterator find (const key_type& k) const { return const_iterator(_tree.iter_find(k)); }
 	// 3) Get range of equal elements
 	pair<const_iterator,const_iterator> equal_range (const key_type& k) const {
 		return ft::make_pair(lower_bound(k), upper_bound(k));
