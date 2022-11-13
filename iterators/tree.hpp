@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   tree.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dida <dida@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 17:19:16 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/13 21:25:36 by dida             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ public:
 	typedef typename ft::TreeIterator<const value_type, const node_type*, tree>	const_iterator;
 	typedef typename ft::reverse_iterator<iterator>								reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>						const_reverse_iterator;
+	typedef typename node_allocator::difference_type							difference_type;
 
 protected:
 	allocator_type			_alloc;
@@ -71,7 +72,9 @@ public:
 		return *this;
 	}
 
-	size_type	max_size () const { return _node_alloc.max_size(); }
+	size_type	max_size () const {
+		return _node_alloc.max_size();
+	}
 	size_type	size () const { return _size; }
 	// 1)Insertion of single element
 	ft::pair<iterator, bool> insert(const value_type& val) {
@@ -216,41 +219,36 @@ public:
 	iterator lower_bound (const key_type& k) {
 		iterator it = begin();
 		iterator last = end();
-		while (it != last) {
-			if (!_compare((*it).first, k))
-				return it;
+		while (it != last && _compare((*it).first, k))
 			it++;
-		}
 		return it;
 	}
 	const_iterator lower_bound (const key_type& k) const {
 		const_iterator it = begin();
 		const_iterator last = end();
-		while (it != last) {
-			if (!_compare((*it).first, k))
-				return it;
+		while (it != last && _compare((*it).first, k))
 			it++;
-		}
 		return it;
 	}
 	// 5) Return iterator to upper bound
 	iterator upper_bound (const key_type& k) {
 		iterator it = end();
 		iterator first = begin();
-		while (it != first) {
-			if (_compare((*it).first, k))
+		iterator tmp = it;
+		for (iterator tmp = it; it != first; it--) {
+			tmp--;
+			if (!_compare(k, (*tmp).first))
 				return it;
-			it--;
 		}
 		return it;
 	}
 	const_iterator upper_bound (const key_type& k) const {
 		const_iterator it = end();
 		const_iterator first = begin();
-		while (it != first) {
-			if (_compare((*it).first, k))
+		for (const_iterator tmp = it; it != first; it--) {
+			tmp--;
+			if (!_compare(k, (*tmp).first))
 				return it;
-			it--;
 		}
 		return it;
 	}

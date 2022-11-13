@@ -80,7 +80,7 @@ template <typename MAP>
 void	ft_bound(MAP &mp, const T1 &param)
 {
 	ft_iterator ite = mp.end(), it[2];
-	_pair<ft_iterator, ft_iterator> ft_range;
+	ft::pair<ft_iterator, ft_iterator> ft_range;
 
 	std::cout << "\t-- [" << iter++ << "] --" << std::endl;
 	std::cout << "with key [" << param << "]:" << std::endl;
@@ -95,7 +95,7 @@ template <typename MAP>
 void	ft_const_bound(const MAP &mp, const T1 &param)
 {
 	ft_const_iterator ite = mp.end(), it[2];
-	_pair<ft_const_iterator, ft_const_iterator> ft_range;
+	ft::pair<ft_const_iterator, ft_const_iterator> ft_range;
 
 	std::cout << "\t-- [" << iter++ << "] (const) --" << std::endl;
 	std::cout << "with key [" << param << "]:" << std::endl;
