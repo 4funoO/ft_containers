@@ -6,7 +6,7 @@
 /*   By: dida <dida@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 21:25:36 by dida             ###   ########.fr       */
+/*   Updated: 2022/11/13 23:01:55 by dida             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,7 +234,6 @@ public:
 	iterator upper_bound (const key_type& k) {
 		iterator it = end();
 		iterator first = begin();
-		iterator tmp = it;
 		for (iterator tmp = it; it != first; it--) {
 			tmp--;
 			if (!_compare(k, (*tmp).first))
@@ -448,13 +447,12 @@ private:
 		else {
 			y = node_maximum(z->left);
 			is_red = y->red;
-			x = y->left;
 			if (y->left == nullptr && is_red == false) {
 				y->left = _nil;
 				y->left->parent = y;
-				x = y->left;
 			}
-			else if (y->parent == z) {
+			x = y->left;
+			if (y->parent == z) {
 				x->parent = y;
 			}
 			else {

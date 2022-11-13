@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   map.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dida <dida@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:32 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 16:48:02 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/13 21:42:07 by dida             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,27 +38,27 @@ public:
 	typedef	typename tree::reverse_iterator								reverse_iterator;
 	typedef	typename tree::const_reverse_iterator						const_reverse_iterator;
 
-	class value_compare : std::binary_function<value_type, value_type, bool>
+	class value_compare
 	{
 	private:
 		friend class map;
 	protected:
-		Compare		comp;
+		Compare				comp;
 		value_compare	(Compare c) : comp(c) {}
 	public:
-		// typedef bool		result_type;
-		// typedef value_type	first_argument_type;
-		// typedef value_type	second_argument_type;
+		typedef bool		result_type;
+		typedef value_type	first_argument_type;
+		typedef value_type	second_argument_type;
 
 		bool	operator() (const value_type& x, const value_type& y) const {
 			return comp(x.first, y.first);
-	  }
+		}
 	};
 
 private:
-	key_compare			_comp;
-	allocator_type		_alloc;
-	tree				_tree;
+	key_compare				_comp;
+	allocator_type			_alloc;
+	tree					_tree;
 	
 public:
 // MEMBER FUNCTIONS
