@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   tree.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dida <dida@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/14 01:01:32 by dida             ###   ########.fr       */
+/*   Updated: 2022/11/14 11:29:29 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,10 @@
 
 namespace ft {
 //TREE IMPLEMENTATION
-template<class Key, class T, class Compare, class Allocator>
+template<class T, class Compare, class Allocator>
 class tree {
 public:
 	typedef T																	value_type;
-	typedef Key																	key_type;
 	typedef Node<value_type>													node_type;
 	typedef node_type*															pointer;
 	typedef Compare																value_compare;
@@ -87,8 +86,8 @@ public:
 			return ft::make_pair(iterator(_head), true);
 		}
 		for ( pointer tmp = _head; tmp != nullptr; ) {
-			if (!_compare(tmp->value.first, val.first)) {
-				if (!_compare(val.first, tmp->value.first))
+			if (!_compare(tmp->value, val)) {
+				if (!_compare(val, tmp->value))
 					return ft::make_pair(iterator(tmp), false);
 				if (tmp->left == nullptr) {
 					tmp->left = _nallocate(val);
@@ -133,10 +132,10 @@ public:
 		return false;
 	}
 	// 2) Find
-	pointer find(const key_type& key) const {
+	pointer find(const value_type& key) const {
 		for ( pointer tmp = _head; tmp != nullptr; ) {
-			if (!_compare(tmp->value.first, key)) {
-				if (!_compare(key, tmp->value.first))
+			if (!_compare(tmp->value, key)) {
+				if (!_compare(key, tmp->value))
 					return tmp;
 				if (tmp->left == nullptr)
 					return nullptr;
@@ -152,10 +151,10 @@ public:
 		return nullptr;
 	}
 		// for iterator
-	pointer iter_find(const key_type& key) const {
+	pointer iter_find(const value_type& key) const {
 		for ( pointer tmp = _head; tmp != nullptr; ) {
-			if (!_compare(tmp->value.first, key)) {
-				if (!_compare(key, tmp->value.first))
+			if (!_compare(tmp->value, key)) {
+				if (!_compare(key, tmp->value))
 					return tmp;
 				if (tmp->left == nullptr)
 					return _root;
@@ -182,7 +181,7 @@ public:
 		}
 		_rb_deletion(pos);
 	}
-	size_type erase (const key_type& k) {
+	size_type erase (const value_type& k) {
 		pointer pos = find(k);
 		if (pos == nullptr)
 			return 0;
@@ -210,43 +209,43 @@ public:
 		ft::swap(_size, x._size);
 	}
 	// 5) Count
-	size_type count (const key_type& k) const {
+	size_type count (const value_type& k) const {
 		if (find(k) == nullptr)
 			return 0;
 		return 1;
 	}
 	// 6) lower/upper bound
-	iterator lower_bound (const key_type& k) {
+	iterator lower_bound (const value_type& k) {
 		iterator it = begin();
 		iterator last = end();
-		while (it != last && _compare((*it).first, k))
+		while (it != last && _compare(*it, k))
 			it++;
 		return it;
 	}
-	const_iterator lower_bound (const key_type& k) const {
+	const_iterator lower_bound (const value_type& k) const {
 		const_iterator it = begin();
 		const_iterator last = end();
-		while (it != last && _compare((*it).first, k))
+		while (it != last && _compare(*it, k))
 			it++;
 		return it;
 	}
 	// 5) Return iterator to upper bound
-	iterator upper_bound (const key_type& k) {
+	iterator upper_bound (const value_type& k) {
 		iterator it = end();
 		iterator first = begin();
 		for (iterator tmp = it; it != first; it--) {
 			tmp--;
-			if (!_compare(k, (*tmp).first))
+			if (!_compare(k, *tmp))
 				return it;
 		}
 		return it;
 	}
-	const_iterator upper_bound (const key_type& k) const {
+	const_iterator upper_bound (const value_type& k) const {
 		const_iterator it = end();
 		const_iterator first = begin();
 		for (const_iterator tmp = it; it != first; it--) {
 			tmp--;
-			if (!_compare(k, (*tmp).first))
+			if (!_compare(k, *tmp))
 				return it;
 		}
 		return it;

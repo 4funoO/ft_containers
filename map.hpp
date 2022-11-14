@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   map.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dida <dida@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:32 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 21:42:07 by dida             ###   ########.fr       */
+/*   Updated: 2022/11/14 11:33:02 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,12 +32,6 @@ public:
 	typedef	typename allocator_type::size_type							size_type;
 	typedef typename allocator_type::difference_type					difference_type;
 
-	typedef	ft::tree<key_type, value_type, key_compare, allocator_type>	tree;
-	typedef	typename tree::iterator										iterator;
-	typedef	typename tree::const_iterator								const_iterator;
-	typedef	typename tree::reverse_iterator								reverse_iterator;
-	typedef	typename tree::const_reverse_iterator						const_reverse_iterator;
-
 	class value_compare
 	{
 	private:
@@ -55,6 +49,12 @@ public:
 		}
 	};
 
+	typedef	ft::tree<value_type, value_compare, allocator_type>		tree;
+	typedef	typename tree::iterator									iterator;
+	typedef	typename tree::const_iterator							const_iterator;
+	typedef	typename tree::reverse_iterator							reverse_iterator;
+	typedef	typename tree::const_reverse_iterator					const_reverse_iterator;
+
 private:
 	key_compare				_comp;
 	allocator_type			_alloc;
@@ -65,11 +65,11 @@ public:
 	// CONSTRUCTORS
 		// 1) Empty
 	explicit map (const key_compare& comp = key_compare(), const allocator_type& alloc = allocator_type())
-				: _comp(comp), _alloc(alloc), _tree() { }
+				: _comp(comp), _alloc(alloc), _tree(value_compare(comp), alloc) { }
 		// 2) Range
 	template <class InputIterator>
 	map (InputIterator first, InputIterator last, const key_compare& comp = key_compare(),
-		const allocator_type& alloc = allocator_type()) : _comp(comp), _alloc(alloc), _tree() {
+		const allocator_type& alloc = allocator_type()) : _comp(comp), _alloc(alloc), _tree(value_compare(comp), alloc) {
 		insert(first, last);
 	}
 		// 3) Copy
@@ -90,20 +90,20 @@ public:
 // ELEMENT ACCESS
 	// AT -> access specified element with bounds checking
 	mapped_type& at (const key_type& k) {
-		Node<value_type>* tmp = _tree.find(k);
+		Node<value_type>* tmp = _tree.find(ft::make_pair(k, mapped_type()));
 		if (tmp == nullptr)
 			throw std::out_of_range("ft::map::at");
 		return (tmp->value.second);
 	}
 	const mapped_type& at (const key_type& k) const {
-		Node<value_type>* tmp = _tree.find(k);
+		Node<value_type>* tmp = _tree.find(ft::make_pair(k, mapped_type()));
 		if (tmp == nullptr)
 			throw std::out_of_range("ft::map::at");
 		return (tmp->value.second);
 	}
 	// [] -> access or insert specified element
-	mapped_type& operator[] (const key_type& key) {
-		return (insert(ft::make_pair(key, T())).first)->second;
+	mapped_type& operator[] (const key_type& k) {
+		return (insert(ft::make_pair(k, mapped_type())).first)->second;
 	}
 // ITERATORS
 	// 1) begin -> returns an iterator to the beginning
@@ -159,7 +159,7 @@ public:
 		// a) Removes element in given position
 	void erase (iterator position) { _tree.erase(position.base()); }
 		// b) Removes element with given key
-	size_type erase (const key_type& k) { return _tree.erase(k); }
+	size_type erase (const key_type& k) { return _tree.erase(ft::make_pair(k, mapped_type())); }
 		// c) Removes elemets in given range
 	void erase (iterator first, iterator last) {
 		while (first != last)
@@ -172,11 +172,11 @@ public:
 // LOOKUP (Operations)
 	// 1) Count -> Count elements with a specific key
 	size_type count (const key_type& k) const {
-		return _tree.count(k);
+		return _tree.count(ft::make_pair(k, mapped_type()));
 	}
 	// 2) Find -> finds element with specific key
-	iterator find (const key_type& k) { return iterator(_tree.iter_find(k)); }
-	const_iterator find (const key_type& k) const { return const_iterator(_tree.iter_find(k)); }
+	iterator find (const key_type& k) { return iterator(_tree.iter_find(ft::make_pair(k, mapped_type()))); }
+	const_iterator find (const key_type& k) const { return const_iterator(_tree.iter_find(ft::make_pair(k, mapped_type()))); }
 	// 3) Get range of equal elements
 	pair<const_iterator,const_iterator> equal_range (const key_type& k) const {
 		return ft::make_pair(lower_bound(k), upper_bound(k));
@@ -185,11 +185,11 @@ public:
 		return ft::make_pair(lower_bound(k), upper_bound(k));
 	}
 	// 4) Return iterator to lower bound
-	iterator lower_bound (const key_type& k) { return _tree.lower_bound(k); }
-	const_iterator lower_bound (const key_type& k) const { return _tree.lower_bound(k); }
+	iterator lower_bound (const key_type& k) { return _tree.lower_bound(ft::make_pair(k, mapped_type())); }
+	const_iterator lower_bound (const key_type& k) const { return _tree.lower_bound(ft::make_pair(k, mapped_type())); }
 	// 5) Return iterator to upper bound
-	iterator upper_bound (const key_type& k) { return _tree.upper_bound(k); }
-	const_iterator upper_bound (const key_type& k) const { return _tree.upper_bound(k); }
+	iterator upper_bound (const key_type& k) { return _tree.upper_bound(ft::make_pair(k, mapped_type())); }
+	const_iterator upper_bound (const key_type& k) const { return _tree.upper_bound(ft::make_pair(k, mapped_type())); }
 // OBSERVERS
 	// Returns the function that compares keys
 	key_compare key_comp() const { return _comp; }
