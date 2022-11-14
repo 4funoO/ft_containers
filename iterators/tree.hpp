@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/14 11:29:29 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/14 16:12:56 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +27,13 @@ public:
 	typedef node_type*															pointer;
 	typedef Compare																value_compare;
 	typedef Allocator															allocator_type;
-	typedef typename Allocator::template rebind<Node<T> >::other				node_allocator;
+	typedef typename Allocator::template rebind<node_type>::other				node_allocator;
 	typedef typename allocator_type::size_type									size_type;
 	typedef typename ft::TreeIterator<value_type, node_type*, tree> 			iterator;
 	typedef typename ft::TreeIterator<const value_type, const node_type*, tree>	const_iterator;
 	typedef typename ft::reverse_iterator<iterator>								reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>						const_reverse_iterator;
-	typedef typename node_allocator::difference_type							difference_type;
+	typedef typename std::ptrdiff_t												difference_type;
 
 protected:
 	allocator_type			_alloc;
@@ -72,7 +72,11 @@ public:
 	}
 
 	size_type	max_size () const {
-		return _node_alloc.max_size();
+		size_type _nmax = std::numeric_limits<difference_type>::max() / 2;
+		size_type _amax = _node_alloc.max_size();
+		if (_amax < _nmax)
+			return _amax;
+		return _nmax;
 	}
 	size_type	size () const { return _size; }
 	// 1)Insertion of single element

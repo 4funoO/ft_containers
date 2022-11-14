@@ -25,7 +25,6 @@ namespace ft {
 		Node*		right;
 		Node*		parent;
 		bool		red;
-		// Node(const T &val = T()) : value(val), parent(), left(), right(), red(true) {}
 	};
 	//MAP ITERATORS
 	template <class T, class TNode, class Tree>
@@ -35,7 +34,6 @@ namespace ft {
 		typedef	TNode														node_type;
 		typedef T*															pointer;
 		typedef T&															reference;
-		typedef const T&													const_reference;
     	typedef ptrdiff_t													difference_type;
 		typedef typename ft::bidirectional_iterator_tag						iterator_category;
 		typedef size_t														size_type;

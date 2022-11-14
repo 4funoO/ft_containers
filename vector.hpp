@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:14 by doreshev          #+#    #+#             */
-/*   Updated: 2022/10/29 16:18:37 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/14 15:35:46 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,10 +165,12 @@ namespace ft {
 		}
 		// 3) Max possible size of the vector
 		size_type max_size() const {
-        	size_type _amax = _alloc.max_size();
-        	size_type _nmax = std::numeric_limits<size_type>::max() / 2;
-        	return ((_amax < _nmax) ? _amax : _nmax);
-    	}
+			size_type _amax = _alloc.max_size();
+			size_type _nmax = std::numeric_limits<size_type>::max() / 2;
+			if (_amax < _nmax)
+				return _amax;
+			return _nmax;
+		}
 		// 4) Creating memory with given capacity
 		void	reserve( size_type new_cap ) {
 			if (new_cap > max_size())

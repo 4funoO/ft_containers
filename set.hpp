@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:18 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/14 11:35:16 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/14 13:45:55 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,9 +33,9 @@ public:
 	typedef	typename allocator_type::size_type							size_type;
 
 	typedef	ft::tree<value_type, key_compare, allocator_type>			tree;
-	typedef	typename tree::iterator										iterator;
+	typedef	typename tree::const_iterator								iterator;
 	typedef	typename tree::const_iterator								const_iterator;
-	typedef	typename tree::reverse_iterator								reverse_iterator;
+	typedef	typename tree::const_reverse_iterator						reverse_iterator;
 	typedef	typename tree::const_reverse_iterator						const_reverse_iterator;
 
 private:
@@ -118,17 +118,17 @@ public:
 	template <class InputIterator>
 	void insert (InputIterator first, InputIterator last) {
 		for (; first != last; first++)
-			insert(*first);
+			_tree.insert(*first);
 	}
 	// 3) Erase -> Removes from container elements
 		// a) Removes element in given position
-	void erase (iterator position) { _tree.erase(position.base()); }
+	void erase (iterator position) { _tree.erase(*position); }
 		// b) Removes element with given key
 	size_type erase (const key_type& k) { return _tree.erase(k); }
 		// c) Removes elemets in given range
 	void erase (iterator first, iterator last) {
 		while (first != last)
-			erase(first++);
+			_tree.erase(*first++);
 	}
 	// 4) Swap -> Exchanges the content of the container by the content of x
 	void swap (set& x) {
