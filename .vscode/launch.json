@@ -1,0 +1,50 @@
+// {
+// 	// Use IntelliSense to learn about possible attributes.
+// 	// Hover to view descriptions of existing attributes.
+// 	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+// 	"version": "0.2.0",
+// 	"configurations": [
+// 		{
+// 			"name": "Debug compiled program",
+// 			"args": [],
+// 			"stopAtEntry": false,
+// 			"environment": [],
+// 			"program": "/Users/doreshev/Desktop/42 Projects/projects/push_swap/push_swap",
+// 			"request": "launch",
+// 			"cwd": "${cwd}",
+// 			"type": "cppdbg",
+// 			"processId": "${command:pickProcess}",
+// 			"setupCommands": [
+// 				{
+// 					"description": "Enable pretty-printing for gdb",
+// 					"text": "-enable-pretty-printing",
+// 					"ignoreFailures": true
+// 				}
+// 			],
+// 			"MIMode": "lldb",
+// 		},
+// 	]
+// }
+
+
+
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "(lldb) Launch",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "/Users/dida/Documents/ft_containers/ft_containers-terminator/debug.out",
+			"args": ["-g3"],
+			"stopAtEntry": true,
+			"cwd": "${fileDirname}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "lldb"
+		}
+	]
+}

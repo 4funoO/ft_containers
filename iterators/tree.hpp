@@ -6,7 +6,7 @@
 /*   By: dida <dida@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:06:43 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/13 23:01:55 by dida             ###   ########.fr       */
+/*   Updated: 2022/11/14 01:01:32 by dida             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,7 @@ public:
 	void	erase (pointer pos) {
 		if (pos == nullptr || pos == _root)
 			return ;
-		if (_size == 1) {
+		if (_size == 1 && pos == _head) {
 			_del_node(pos);
 			_head = nullptr;
 			_root->left = nullptr;
@@ -364,7 +364,7 @@ private:
 		new_node->right = nullptr; new_node->parent = nullptr;
 		return new_node;
 	}
-		// 2) Delete Node
+		// 2) Deallocate Node
 	void	_del_node (pointer pos) {
 		try	{
 			_alloc.destroy(&(pos->value));
@@ -486,7 +486,7 @@ private:
 					x = x->parent;
 				}
 				else {
-					if (s->right->red == false) {
+					if (s->right == nullptr || s->right->red == false) {
 						s->left->red = false;
 						s->red = true;
 						rotate_right(s);
@@ -512,7 +512,7 @@ private:
 					x = x->parent;
 				}
 				else {
-					if (s->left->red == false) {
+					if (s->left == nullptr || s->left->red == false) {
 						s->right->red = false;
 						s->red = true;
 						rotate_left(s);
@@ -550,6 +550,8 @@ private:
 				_nil->parent->right =nullptr;
 			_nil->parent = nullptr;
 		}
+		if (_head == _nil)
+			_head = nullptr;
 	}
 	void	_copy_tree(pointer other_head) {
 		if (other_head == nullptr)
