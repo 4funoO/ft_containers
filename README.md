@@ -18,8 +18,9 @@ Memory allocation was perfomed by [std::allocator](https://en.cppreference.com/w
 
 
 
-Tester is also included.
-To run test just cd into the folder 'container_test' and run command 'bash do.sh'
+Tester is included. To run it:
+cd into the folder 'container_test'
+run command 'bash do.sh'
 
 Test result
 ![img](https://user-images.githubusercontent.com/37631996/204149467-a881f775-b3f2-40dd-8dab-aa6358d8fed7.png)
