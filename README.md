@@ -19,7 +19,9 @@ Memory allocation was perfomed by [std::allocator](https://en.cppreference.com/w
 
 
 Tester is included. To run it:
+
 cd into the folder 'container_test'
+
 run command 'bash do.sh'
 
 Test result
