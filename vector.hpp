@@ -6,7 +6,7 @@
 /*   By: doreshev <doreshev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/08 16:03:14 by doreshev          #+#    #+#             */
-/*   Updated: 2022/11/15 16:26:55 by doreshev         ###   ########.fr       */
+/*   Updated: 2022/11/14 15:35:46 by doreshev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,12 +61,13 @@ namespace ft {
 		// 4) Copy
 		vector ( const vector& x ) : _size(0), _cap(0), _begin(nullptr), _alloc(x.get_allocator()) { 
 			_vallocate(x.capacity());
-			try {
-				for ( ; _size < x._size; _size++)
+			for ( ; _size < x._size; _size++) {
+				try {
 					_alloc.construct(_begin + _size, x[_size]);
-			}
-			catch(...) {
-				_vdeallocate();
+				}
+				catch(...) {
+					_vdeallocate();
+				}
 			}
 		}
 
@@ -92,12 +93,13 @@ namespace ft {
 					_alloc.deallocate(_begin, _cap);
 				_vallocate(count);
 			}
-			try {
-				for ( ; _size < count; _size++)
+			for ( ; _size < count; _size++) {
+				try {
 					_alloc.construct(_begin + _size, val);
-			}
-			catch(...) {
-				_vdeallocate();
+				}
+				catch(...) {
+					_vdeallocate();
+				}
 			}
 		}
 		// 2) Range
@@ -176,14 +178,15 @@ namespace ft {
 			else if (new_cap > _cap) {
 				pointer	tmp = _pallocate(new_cap);
 				size_type i = 0;
-				try {
-					for ( ; i < _size; i++)
+				for ( ; i < _size; i++) {
+					try {
 						_alloc.construct(tmp + i, _begin[i]);
-				}
-				catch(...) {
-					for (size_type j = 0; j < i; j++)	
-						_alloc.destroy(tmp + i);
-					_alloc.deallocate(tmp, new_cap);
+					}
+					catch(...) {
+						for (size_type j = 0; j < i; j++)	
+							_alloc.destroy(tmp + i);
+						_alloc.deallocate(tmp, new_cap);
+					}
 				}
 				_vdeallocate();
 				_begin = tmp; _size = i; _cap = new_cap;
@@ -208,26 +211,25 @@ namespace ft {
 			size_type	cap = _vcapcheck();
 			size_type	dist = static_cast<size_type>(ft::distance(begin(), position));
 			size_type	i = 0;
-			size_type	k = 0;
 
 			if (position == end()) {
 				push_back(val);
 				return &back();
 			}
 			tmp = _pallocate(cap);
-			try {
-				for ( ; i < _size; i++) {
+			for (size_type k = 0; i < _size; i++) {
+				try {
 					if (i == dist) {
 						_alloc.construct(tmp + i, val);
 						k = 1;
 					}
 					_alloc.construct(tmp + i + k, _begin[i]);
 				}
-			}
-			catch(...) {
-				for (size_type j = 0; j < i + k; j++)
-					_alloc.destroy(tmp + i + k);
-				_alloc.deallocate(tmp, cap);
+				catch(...) {
+					for (size_type j = 0; j < i + k; j++)
+						_alloc.destroy(tmp + i + k);
+					_alloc.deallocate(tmp, cap);
+				}
 			}
 			_vdeallocate();
 			_begin = tmp; _size = i + 1; _cap = cap;
@@ -240,13 +242,12 @@ namespace ft {
 			size_type	new_size = n + _size;
 			size_type	pos = static_cast<size_type>(ft::distance(begin(), position));
 			size_type	i = 0;
-			size_type	k = 0;
 
 			if (new_size > new_cap)
 				new_cap = new_size;
 			new_vec = _pallocate(new_cap);
-			try {
-				for (; i < new_size; i++) {
+			for (size_type k = 0; i < new_size; i++) {
+				try {
 					if (i == pos) {
 						for ( ; k < n; k++)
 							_alloc.construct(new_vec + i + k, val);
@@ -254,11 +255,11 @@ namespace ft {
 					if (i < _size)
 						_alloc.construct(new_vec + i + k, *(_begin + i));
 				}
-			}
-			catch(...) {
-				for (size_type j = 0; j < i + k; j++)
-					_alloc.destroy(new_vec + i + k);
-				_alloc.deallocate(new_vec, new_cap);
+				catch(...) {
+					for (size_type j = 0; j < i + k; j++)
+						_alloc.destroy(new_vec + i + k);
+					_alloc.deallocate(new_vec, new_cap);
+				}
 			}
 			_vdeallocate();
 			_begin = new_vec; _size = new_size; _cap = new_cap;
@@ -274,6 +275,7 @@ namespace ft {
 			// a) Single Element
 		iterator	erase(iterator position) {
 			iterator	last(_begin + _size - 1);
+
 			try	{
 				_vdestroy(&(*position));
 				for (iterator	tmp = position; tmp != last; tmp++) {
@@ -394,12 +396,13 @@ namespace ft {
 					_alloc.deallocate(_begin, _cap);
 				_vallocate(count);
 			}
-			try {
-				for ( ; first != last; first++, _size++)
+			for ( ; first != last; first++, _size++) {
+				try {
 					_alloc.construct(_begin + _size, *first);
-			}
-			catch(...) {
-				_vdeallocate();
+				}
+				catch(...) {
+					_vdeallocate();
+				}
 			}
 		}
 			// for Input Iterator tag
